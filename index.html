@@ -73,6 +73,11 @@
 
             <!-- Quick Stats & Channel Settings -->
             <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <!-- Indikator Status Auto-Save Cloud -->
+                <div id="syncStatusBadge" class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs">
+                    <i id="syncStatusIcon" class="fa-solid fa-cloud-arrow-up text-emerald-400"></i>
+                    <span id="syncStatusText" class="font-medium text-emerald-300">Menghubungkan Penyimpanan...</span>
+                </div>
                 <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/70 px-3 py-1.5 rounded-xl text-xs">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span class="text-slate-400">Claude Ready:</span>
@@ -92,6 +97,15 @@
                     <i class="fa-solid fa-sliders text-orange-400"></i>
                     <span>Atur 6 Channel YT</span>
                 </button>
+                <button onclick="exportBackupData()" title="Download file cadangan (.json)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1">
+                    <i class="fa-solid fa-download text-sky-400"></i>
+                    <span class="hidden sm:inline">Backup</span>
+                </button>
+                <label title="Muat file cadangan (.json)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1 cursor-pointer">
+                    <i class="fa-solid fa-upload text-amber-400"></i>
+                    <span class="hidden sm:inline">Restore</span>
+                    <input type="file" accept=".json" onchange="importBackupData(event)" class="hidden">
+                </label>
             </div>
         </div>
 
@@ -651,6 +665,7 @@
             acc.limitUntil = toLocalISOString(d);
             renderClaudeTable();
             renderIdeKonten();
+            if (window.saveStateToCloud) window.saveStateToCloud();
             showToast(`${acc.name} diset limit hingga ${hours} jam ke depan`, 'fa-regular fa-clock text-orange-400');
         }
 
@@ -660,6 +675,7 @@
             acc.limitUntil = '';
             renderClaudeTable();
             renderIdeKonten();
+            if (window.saveStateToCloud) window.saveStateToCloud();
             showToast(`${acc.name} sudah Ready kembali!`);
         }
 
@@ -685,12 +701,14 @@
             limitInput.value = '';
             document.getElementById('addClaudeForm').classList.add('hidden');
             renderClaudeTable();
-            showToast('Akun Claude baru berhasil ditambahkan!');
+            if (window.saveStateToCloud) window.saveStateToCloud();
+            showToast('Akun Claude baru berhasil ditambahkan & disimpan!');
         }
 
         function deleteClaudeAccount(id) {
             claudeAccounts = claudeAccounts.filter(a => a.id !== id);
             renderClaudeTable();
+            if (window.saveStateToCloud) window.saveStateToCloud();
             showToast('Akun Claude dihapus', 'fa-regular fa-trash-can text-slate-400');
         }
 
@@ -720,7 +738,8 @@
                 acc.limitUntil = document.getElementById('customLimitInput').value;
                 renderClaudeTable();
                 renderIdeKonten();
-                showToast(`Batas limit ${acc.name} diperbarui!`);
+                if (window.saveStateToCloud) window.saveStateToCloud();
+                showToast(`Batas limit ${acc.name} diperbarui & disimpan!`);
             }
             closeLimitModal();
         }
@@ -919,7 +938,8 @@
             document.getElementById('newUpDesc').value = '';
             document.getElementById('addUpForm').classList.add('hidden');
             renderUpKonten();
-            showToast('Konten masuk ke antrean jadwal tayang terdekat!');
+            if (window.saveStateToCloud) window.saveStateToCloud();
+            showToast('Konten masuk ke antrean jadwal tayang & tersimpan!');
         }
 
         function toggleUpKontenCheck(id) {
@@ -927,6 +947,7 @@
             if (!item) return;
             item.checked = !item.checked;
             renderUpKonten();
+            if (window.saveStateToCloud) window.saveStateToCloud();
             if (item.checked) {
                 showToast('Konten selesai di-up & dipindahkan ke urutan paling bawah!');
             }
@@ -937,6 +958,7 @@
             if (!item) return;
             item.channelId = newChannelId;
             renderUpKonten();
+            if (window.saveStateToCloud) window.saveStateToCloud();
             const ch = ytChannels.find(c => c.id === newChannelId);
             showToast(`Channel diubah ke ${ch ? ch.name : ''}`);
         }
@@ -957,6 +979,7 @@
         function deleteUpKonten(id) {
             upKontenList = upKontenList.filter(i => i.id !== id);
             renderUpKonten();
+            if (window.saveStateToCloud) window.saveStateToCloud();
             showToast('Konten dihapus dari daftar Up Konten', 'fa-regular fa-trash-can text-slate-400');
         }
 
@@ -1076,7 +1099,8 @@
 
             ideInput.value = '';
             renderIdeKonten();
-            showToast('Ide konten berhasil ditambahkan!');
+            if (window.saveStateToCloud) window.saveStateToCloud();
+            showToast('Ide konten berhasil ditambahkan & disimpan!');
         }
 
         function toggleIdeCheck(id) {
@@ -1084,6 +1108,7 @@
             if (!item) return;
             item.checked = !item.checked;
             renderIdeKonten();
+            if (window.saveStateToCloud) window.saveStateToCloud();
             if (item.checked) {
                 showToast('Ide selesai dieksekusi & turun ke urutan bawah!');
             }
@@ -1096,6 +1121,7 @@
             // Mark idea as checked & open Up Konten form pre-filled with this idea
             item.checked = true;
             renderIdeKonten();
+            if (window.saveStateToCloud) window.saveStateToCloud();
 
             const form = document.getElementById('addUpForm');
             form.classList.remove('hidden');
@@ -1110,6 +1136,7 @@
         function deleteIdeKonten(id) {
             ideKontenList = ideKontenList.filter(i => i.id !== id);
             renderIdeKonten();
+            if (window.saveStateToCloud) window.saveStateToCloud();
             showToast('Ide konten dihapus', 'fa-regular fa-trash-can text-slate-400');
         }
 
@@ -1146,7 +1173,55 @@
             });
             closeChannelModal();
             renderUpKonten();
-            showToast('Nama ke-6 Channel YouTube berhasil diperbarui!');
+            if (window.saveStateToCloud) window.saveStateToCloud();
+            showToast('Nama ke-6 Channel YouTube berhasil diperbarui & disimpan!');
+        }
+
+        // ====================================================
+        // 6B. EXPORT & IMPORT BACKUP FILE (.JSON)
+        // ====================================================
+        function exportBackupData() {
+            const payload = {
+                exportedAt: new Date().toISOString(),
+                ytChannels,
+                claudeAccounts,
+                upKontenList,
+                ideKontenList
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-creator-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('File Backup (.json) berhasil diunduh!');
+        }
+
+        function importBackupData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data.ytChannels)) ytChannels = data.ytChannels;
+                    if (Array.isArray(data.claudeAccounts)) claudeAccounts = data.claudeAccounts;
+                    if (Array.isArray(data.upKontenList)) upKontenList = data.upKontenList;
+                    if (Array.isArray(data.ideKontenList)) ideKontenList = data.ideKontenList;
+                    renderClaudeTable();
+                    renderUpKonten();
+                    renderIdeKonten();
+                    if (window.saveStateToCloud) window.saveStateToCloud();
+                    showToast('Data berhasil dipulihkan dari file Backup!');
+                } catch (err) {
+                    showToast('Format file backup tidak valid!', 'fa-solid fa-triangle-exclamation text-rose-400');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
         }
 
         // ====================================================
@@ -1222,6 +1297,120 @@
                 renderUpKonten();
             }, 30000);
         };
+    </script>
+
+    <!-- Cloud Auto-Save Synchronization Module -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const badge = document.getElementById('syncStatusBadge');
+        const icon = document.getElementById('syncStatusIcon');
+        const text = document.getElementById('syncStatusText');
+
+        function setSyncIndicator(state, message) {
+            if (!badge || !icon || !text) return;
+            text.textContent = message;
+            if (state === 'saving') {
+                badge.className = 'flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs';
+                icon.className = 'fa-solid fa-arrows-rotate fa-spin text-amber-400';
+                text.className = 'font-medium text-amber-300';
+            } else if (state === 'saved') {
+                badge.className = 'flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs';
+                icon.className = 'fa-solid fa-cloud-check text-emerald-400';
+                text.className = 'font-medium text-emerald-300';
+            } else {
+                badge.className = 'flex items-center gap-2 bg-rose-500/10 border border-rose-500/30 px-3 py-1.5 rounded-xl text-xs';
+                icon.className = 'fa-solid fa-triangle-exclamation text-rose-400';
+                text.className = 'font-medium text-rose-300';
+            }
+        }
+
+        async function initCloudStorage() {
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+                if (!firebaseConfig) {
+                    setSyncIndicator('saved', 'Mode Sesi Aktif (Gunakan Backup)');
+                    return;
+                }
+
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+
+                // RULE 3: Auth Before Queries
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                const currentUser = auth.currentUser;
+                if (!currentUser) return;
+
+                // RULE 1: Strict Path for User Private Data
+                const stateDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'creator_data', 'main_state');
+
+                let isSavingLocalChange = false;
+
+                // Global function to save current state whenever user makes any change
+                window.saveStateToCloud = async () => {
+                    if (!auth.currentUser) return;
+                    try {
+                        isSavingLocalChange = true;
+                        setSyncIndicator('saving', 'Menyimpan...');
+                        await setDoc(stateDocRef, {
+                            ytChannels,
+                            claudeAccounts,
+                            upKontenList,
+                            ideKontenList,
+                            updatedAt: Date.now()
+                        });
+                        setSyncIndicator('saved', 'Tersimpan Otomatis');
+                    } catch (err) {
+                        console.error('Gagal menyimpan:', err);
+                        setSyncIndicator('error', 'Gagal Simpan');
+                    } finally {
+                        setTimeout(() => { isSavingLocalChange = false; }, 300);
+                    }
+                };
+
+                // Listen to saved data & auto-load on open
+                onSnapshot(
+                    stateDocRef,
+                    (snapshot) => {
+                        if (snapshot.exists()) {
+                            if (!isSavingLocalChange) {
+                                const data = snapshot.data();
+                                if (Array.isArray(data.ytChannels)) ytChannels = data.ytChannels;
+                                if (Array.isArray(data.claudeAccounts)) claudeAccounts = data.claudeAccounts;
+                                if (Array.isArray(data.upKontenList)) upKontenList = data.upKontenList;
+                                if (Array.isArray(data.ideKontenList)) ideKontenList = data.ideKontenList;
+                                renderClaudeTable();
+                                renderUpKonten();
+                                renderIdeKonten();
+                            }
+                            setSyncIndicator('saved', 'Tersimpan Otomatis');
+                        } else {
+                            // First time opening: save initial template to cloud
+                            window.saveStateToCloud();
+                        }
+                    },
+                    (error) => {
+                        console.error('Error membaca data:', error);
+                        setSyncIndicator('error', 'Offline / Gagal Sinkron');
+                    }
+                );
+            } catch (err) {
+                console.error('Inisialisasi penyimpanan gagal:', err);
+                setSyncIndicator('error', 'Penyimpanan Offline');
+            }
+        }
+
+        initCloudStorage();
     </script>
 </body>
 </html>
