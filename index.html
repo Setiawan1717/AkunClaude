@@ -152,34 +152,42 @@
                             <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/30">1</span>
                             <h2 class="text-base sm:text-lg font-bold text-white">Limit Claude</h2>
                         </div>
-                        <p class="text-xs text-slate-400 mt-0.5">Pantau jam reset limit akun Claude gratisan</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Tambah akun & atur limit mulai dari tanggal hingga menit</p>
                     </div>
-                    <button onclick="toggleAddClaudeForm()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-orange-500/20">
-                        <i class="fa-solid fa-plus"></i> Tambah Akun
-                    </button>
+                    <span class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 font-medium">
+                        Total: <strong id="totalClaudeCount" class="text-orange-400">0</strong> Akun
+                    </span>
                 </div>
 
-                <!-- Add Claude Account Collapsible Form -->
-                <div id="addClaudeForm" class="hidden p-4 bg-slate-800/60 border-b border-slate-700/70 space-y-3">
+                <!-- Form Tambah Akun Claude (Selalu Tampil & Mudah Diakses) -->
+                <div id="addClaudeForm" class="p-4 bg-slate-800/50 border-b border-slate-800 space-y-3">
                     <div class="text-xs font-semibold text-orange-300 flex items-center justify-between">
-                        <span>Tambah Akun Claude Baru</span>
-                        <button onclick="toggleAddClaudeForm()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                        <span><i class="fa-solid fa-user-plus mr-1.5"></i>Tambah Akun Claude Baru</span>
+                        <span class="text-[11px] text-slate-400 font-normal">Kosongkan limit jika akun sedang Ready</span>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 gap-3">
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Nama Akun / Email</label>
-                            <input type="text" id="newClaudeName" placeholder="Misal: Claude 7 (mail@..)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500">
+                            <label class="block text-xs text-slate-300 mb-1 font-medium">Nama Akun / Email</label>
+                            <input type="text" id="newClaudeName" placeholder="Contoh: Claude 7 - kreator07@gmail.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500">
                         </div>
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">Limit Hingga Kapan (Opsional)</label>
-                            <input type="datetime-local" id="newClaudeLimit" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs text-slate-300 font-medium">Limit Hingga Kapan (Tanggal & Jam:Menit)</label>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="fillNewClaudeQuickLimit(5)" class="text-[11px] px-2 py-0.5 rounded-md bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border border-orange-500/30 transition">
+                                        Isi +5 Jam
+                                    </button>
+                                    <button type="button" onclick="document.getElementById('newClaudeLimit').value = ''" class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                                        Reset (Ready)
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="datetime-local" id="newClaudeLimit" step="60" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500">
                         </div>
                     </div>
-                    <div class="flex justify-end gap-2">
-                        <button onclick="addClaudeAccount()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
-                            Simpan Akun
-                        </button>
-                    </div>
+                    <button type="button" onclick="addClaudeAccount()" class="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20">
+                        <i class="fa-solid fa-plus"></i> Tambah Akun Claude
+                    </button>
                 </div>
 
                 <!-- Table Limit Claude (Left: Nama Akun, Right: Limit Hingga Kapan) -->
@@ -188,7 +196,7 @@
                         <thead>
                             <tr class="border-b border-slate-800 bg-slate-950/60 text-[11px] uppercase tracking-wider text-slate-400">
                                 <th class="py-3 px-4 font-semibold">Nama Akun</th>
-                                <th class="py-3 px-4 font-semibold text-right">Limit Hingga Kapan</th>
+                                <th class="py-3 px-4 font-semibold text-right">Limit Hingga Kapan (Tanggal s/d Menit)</th>
                             </tr>
                         </thead>
                         <tbody id="claudeTableBody" class="divide-y divide-slate-800/70 text-sm">
@@ -635,6 +643,45 @@
         ];
 
         let activeLimitModalAccountId = null;
+        let editingClaudeNameId = null;
+
+        // Load from localStorage fallback immediately so user never loses local changes
+        const LOCAL_STORAGE_KEY = 'ai_creator_studio_main_state_v2';
+        function loadFromLocalCache() {
+            try {
+                const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed.ytChannels)) ytChannels = parsed.ytChannels;
+                if (Array.isArray(parsed.claudeAccounts)) claudeAccounts = parsed.claudeAccounts;
+                if (Array.isArray(parsed.upKontenList)) upKontenList = parsed.upKontenList;
+                if (Array.isArray(parsed.ideKontenList)) ideKontenList = parsed.ideKontenList;
+            } catch (e) {
+                console.warn('Gagal membaca cache lokal:', e);
+            }
+        }
+
+        function saveToLocalCache() {
+            try {
+                const cleanPayload = JSON.parse(JSON.stringify({
+                    ytChannels,
+                    claudeAccounts,
+                    upKontenList,
+                    ideKontenList,
+                    updatedAt: Date.now()
+                }));
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleanPayload));
+            } catch (e) {
+                console.warn('Gagal menyimpan cache lokal:', e);
+            }
+        }
+
+        function triggerSaveAll() {
+            saveToLocalCache();
+            if (window.saveStateToCloud) {
+                window.saveStateToCloud();
+            }
+        }
 
         // ====================================================
         // 2. HELPER & FORMATTING FUNCTIONS
@@ -654,30 +701,35 @@
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/&/g, '&amp;')
-                      .replace(/</g, '&lt;')
-                      .replace(/>/g, '&gt;')
-                      .replace(/"/g, '&quot;')
-                      .replace(/'/g, '&#039;');
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         function isLimitActive(limitUntilStr) {
             if (!limitUntilStr) return false;
             const target = new Date(limitUntilStr).getTime();
+            if (isNaN(target)) return false;
             return target > Date.now();
         }
 
         function getRemainingTimeText(limitUntilStr) {
             if (!limitUntilStr) return null;
             const diff = new Date(limitUntilStr).getTime() - Date.now();
-            if (diff <= 0) return null;
-            const totalMinutes = Math.ceil(diff / (1000 * 60));
-            const hours = Math.floor(totalMinutes / 60);
-            const mins = totalMinutes % 60;
-            if (hours > 0) {
-                return `Sisa ${hours}j ${mins}m`;
+            if (isNaN(diff) || diff <= 0) return null;
+            const totalSeconds = Math.floor(diff / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const mins = Math.floor((totalSeconds % 3600) / 60);
+            const secs = totalSeconds % 60;
+            const pad = (n) => String(n).padStart(2, '0');
+            if (days > 0) {
+                return `Sisa ${days}h ${pad(hours)}j ${pad(mins)}m ${pad(secs)}d`;
             }
-            return `Sisa ${mins} menit`;
+            return `Sisa ${pad(hours)}j ${pad(mins)}m ${pad(secs)}d`;
         }
 
         function formatDateTimeIndo(isoStr) {
@@ -687,7 +739,7 @@
             const hari = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'][d.getDay()];
             const bln = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][d.getMonth()];
             const pad = (n) => String(n).padStart(2, '0');
-            return `${hari}, ${d.getDate()} ${bln} • ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            return `${hari}, ${pad(d.getDate())} ${bln} ${d.getFullYear()} • ${pad(d.getHours())}:${pad(d.getMinutes())}`;
         }
 
         function getRelativeScheduleBadge(isoStr, isChecked) {
@@ -712,57 +764,122 @@
         // ====================================================
         function renderClaudeTable() {
             const tbody = document.getElementById('claudeTableBody');
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             let readyCount = 0;
+
+            if (claudeAccounts.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="py-8 text-center text-slate-500 text-xs sm:text-sm">
+                            Belum ada akun Claude. Silakan isi <strong>Nama Akun</strong> & <strong>Limit Hingga Kapan</strong> di atas lalu klik <strong>+ Tambah Akun Claude</strong>.
+                        </td>
+                    </tr>
+                `;
+            }
 
             claudeAccounts.forEach((acc) => {
                 const active = isLimitActive(acc.limitUntil);
                 if (!active) readyCount++;
                 const remaining = getRemainingTimeText(acc.limitUntil);
+                const inputDateVal = acc.limitUntil ? acc.limitUntil.slice(0, 16) : '';
+                const isEditingName = editingClaudeNameId === acc.id;
 
                 const tr = document.createElement('tr');
+                tr.setAttribute('data-claude-row', acc.id);
+                tr.setAttribute('data-was-active', active ? 'true' : 'false');
                 tr.className = `row-transition hover:bg-slate-800/40 ${active ? 'bg-orange-950/10' : ''}`;
 
                 tr.innerHTML = `
-                    <td class="py-3.5 px-4 align-middle">
-                        <div class="flex items-center gap-2.5">
-                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${active ? 'bg-orange-500' : 'bg-emerald-400 shadow-sm shadow-emerald-400'}"></span>
-                            <div>
-                                <div class="font-medium text-slate-100 text-xs sm:text-sm">${escapeHtml(acc.name)}</div>
-                                <div class="text-[11px] ${active ? 'text-orange-400' : 'text-emerald-400'} font-medium">
-                                    ${active ? `Limit Aktif (${remaining})` : 'Ready • Bisa Dipakai'}
+                    <!-- Kolom Kiri: Nama Akun + Status + Edit Nama -->
+                    <td class="py-3.5 px-4 align-top">
+                        <div class="flex items-start gap-2.5">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 ${active ? 'bg-rose-500 animate-pulse' : 'bg-emerald-400 shadow-sm shadow-emerald-400'}"></span>
+                            <div class="flex-1 min-w-0 space-y-1.5">
+                                ${isEditingName ? `
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="text" id="editClaudeNameInput_${acc.id}" value="${escapeHtml(acc.name)}" class="w-full bg-slate-950 border border-orange-500 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none">
+                                        <button type="button" onclick="saveInlineClaudeName('${acc.id}')" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold">Simpan</button>
+                                        <button type="button" onclick="cancelInlineClaudeName()" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px]">Batal</button>
+                                    </div>
+                                ` : `
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-semibold text-slate-100 text-xs sm:text-sm break-all">${escapeHtml(acc.name)}</span>
+                                        <button type="button" onclick="startInlineClaudeName('${acc.id}')" title="Ubah nama akun" class="text-slate-500 hover:text-orange-400 transition p-0.5">
+                                            <i class="fa-solid fa-pen text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                `}
+
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    ${active ? `
+                                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30">LIMIT AKTIF</span>
+                                        <span data-countdown-id="${acc.id}" class="text-[11px] font-mono font-semibold text-orange-400">${remaining || ''}</span>
+                                    ` : `
+                                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">READY</span>
+                                        <span class="text-[11px] text-emerald-400/90">Siap dipakai</span>
+                                    `}
+                                </div>
+
+                                <div class="pt-0.5">
+                                    <button type="button" onclick="deleteClaudeAccount('${acc.id}')" class="text-[11px] text-slate-500 hover:text-rose-400 transition inline-flex items-center gap-1">
+                                        <i class="fa-regular fa-trash-can text-[10px]"></i> Hapus Akun
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </td>
-                    <td class="py-3.5 px-4 align-middle text-right">
-                        <div class="flex flex-col items-end gap-1.5">
+
+                    <!-- Kolom Kanan: Limit Hingga Kapan (Mulai dari Tanggal sampai Menit, Bisa Edit Langsung) -->
+                    <td class="py-3.5 px-4 align-top text-right">
+                        <div class="flex flex-col items-end gap-2">
+                            <!-- Tampilan Tanggal & Jam:Menit -->
                             ${active ? `
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-300 text-xs font-semibold">
                                     <i class="fa-regular fa-clock"></i>
-                                    ${formatDateTimeIndo(acc.limitUntil)}
+                                    <span>${formatDateTimeIndo(acc.limitUntil)} WIB</span>
                                 </span>
                             ` : `
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium">
-                                    <i class="fa-solid fa-check"></i> Aman / Tanpa Limit
+                                    <i class="fa-solid fa-check"></i> Siap Digunakan (Tanpa Limit)
                                 </span>
                             `}
+
+                            <!-- Input Edit Limit Langsung (Tanggal, Bulan, Tahun, Jam, Menit) -->
+                            <div class="flex flex-wrap items-center justify-end gap-1.5 w-full max-w-[270px]">
+                                <input
+                                    type="datetime-local"
+                                    id="inlineLimitInput_${acc.id}"
+                                    step="60"
+                                    value="${inputDateVal}"
+                                    onchange="updateClaudeLimitInline('${acc.id}', this.value)"
+                                    title="Ubah tanggal, jam, dan menit limit"
+                                    class="bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-orange-500 rounded-lg px-2 py-1 text-[11px] text-slate-200 focus:outline-none"
+                                >
+                                <button
+                                    type="button"
+                                    onclick="saveInlineLimitBtn('${acc.id}')"
+                                    title="Simpan perubahan tanggal & menit limit"
+                                    class="px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-semibold transition"
+                                >
+                                    Simpan
+                                </button>
+                            </div>
+
+                            <!-- Tombol Cepat +5 Jam & Reset -->
                             <div class="flex items-center justify-end gap-1">
-                                <button onclick="setClaudeQuickHours('${acc.id}', 5)" title="Set Limit +5 Jam dari sekarang" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-orange-500/20 hover:text-orange-300 border border-slate-700 text-[11px] text-slate-300 transition">
-                                    +5j
+                                <button type="button" onclick="setClaudeQuickHours('${acc.id}', 5)" title="Tambah Limit +5 Jam dari sekarang" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-orange-500/20 hover:text-orange-300 border border-slate-700 text-[11px] text-slate-300 transition font-medium">
+                                    +5 Jam
                                 </button>
-                                <button onclick="openLimitModal('${acc.id}')" title="Atur jam spesifik" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 transition">
-                                    <i class="fa-regular fa-calendar"></i> Set Jam
+                                <button type="button" onclick="openLimitModal('${acc.id}')" title="Popup atur limit" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 transition">
+                                    <i class="fa-regular fa-calendar"></i> Detail
                                 </button>
-                                ${active ? `
-                                    <button onclick="clearClaudeLimit('${acc.id}')" title="Reset jadi Ready" class="px-2 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/30 text-[11px] text-emerald-300 transition">
-                                        Reset
+                                ${active || acc.limitUntil ? `
+                                    <button type="button" onclick="clearClaudeLimit('${acc.id}')" title="Reset menjadi Ready" class="px-2 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/30 text-[11px] text-emerald-300 transition font-medium">
+                                        Reset / Ready
                                     </button>
                                 ` : ''}
-                                <button onclick="deleteClaudeAccount('${acc.id}')" title="Hapus akun" class="p-1 text-slate-500 hover:text-rose-400 transition ml-1">
-                                    <i class="fa-regular fa-trash-can text-xs"></i>
-                                </button>
                             </div>
                         </div>
                     </td>
@@ -771,7 +888,96 @@
             });
 
             document.getElementById('statClaudeReady').textContent = `${readyCount}/${claudeAccounts.length}`;
+            const totalBadge = document.getElementById('totalClaudeCount');
+            if (totalBadge) totalBadge.textContent = claudeAccounts.length;
             populateIdeClaudeSelect();
+        }
+
+        // Update hanya teks hitung mundur setiap detik agar tidak menutup kalender datetime-local saat diedit
+        function updateClaudeCountdownsTick() {
+            let needsFullReRender = false;
+            claudeAccounts.forEach(acc => {
+                const row = document.querySelector(`tr[data-claude-row="${acc.id}"]`);
+                if (!row) return;
+                const wasActive = row.getAttribute('data-was-active') === 'true';
+                const nowActive = isLimitActive(acc.limitUntil);
+                if (wasActive !== nowActive) {
+                    needsFullReRender = true;
+                } else if (nowActive) {
+                    const span = row.querySelector(`[data-countdown-id="${acc.id}"]`);
+                    if (span) {
+                        span.textContent = getRemainingTimeText(acc.limitUntil) || '';
+                    }
+                }
+            });
+
+            if (needsFullReRender) {
+                renderClaudeTable();
+                renderIdeKonten();
+            }
+        }
+
+        function fillNewClaudeQuickLimit(hours) {
+            const d = new Date(Date.now() + hours * 3600 * 1000);
+            const input = document.getElementById('newClaudeLimit');
+            if (input) input.value = toLocalISOString(d);
+        }
+
+        function updateClaudeLimitInline(id, newDateTimeVal) {
+            const acc = claudeAccounts.find(a => a.id === id);
+            if (!acc) return;
+            acc.limitUntil = newDateTimeVal || '';
+            renderClaudeTable();
+            renderIdeKonten();
+            triggerSaveAll();
+            if (newDateTimeVal) {
+                showToast(`Limit ${acc.name} diset ke ${formatDateTimeIndo(newDateTimeVal)}`, 'fa-regular fa-clock text-orange-400');
+            } else {
+                showToast(`${acc.name} direset menjadi Ready!`);
+            }
+        }
+
+        function saveInlineLimitBtn(id) {
+            const input = document.getElementById(`inlineLimitInput_${id}`);
+            if (!input) return;
+            updateClaudeLimitInline(id, input.value);
+        }
+
+        function startInlineClaudeName(id) {
+            editingClaudeNameId = id;
+            renderClaudeTable();
+            const input = document.getElementById(`editClaudeNameInput_${id}`);
+            if (input) input.focus();
+        }
+
+        function cancelInlineClaudeName() {
+            editingClaudeNameId = null;
+            renderClaudeTable();
+        }
+
+        function saveInlineClaudeName(id) {
+            const input = document.getElementById(`editClaudeNameInput_${id}`);
+            if (!input) return;
+            const newName = input.value.trim();
+            if (!newName) {
+                showToast('Nama akun tidak boleh kosong!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+            const acc = claudeAccounts.find(a => a.id === id);
+            if (acc) {
+                const oldName = acc.name;
+                acc.name = newName;
+                ideKontenList.forEach(item => {
+                    if (item.claudeAccount === oldName) {
+                        item.claudeAccount = newName;
+                    }
+                });
+            }
+            editingClaudeNameId = null;
+            renderClaudeTable();
+            renderIdeKonten();
+            triggerSaveAll();
+            showToast('Nama akun Claude berhasil diperbarui!');
         }
 
         function setClaudeQuickHours(id, hours) {
@@ -781,8 +987,8 @@
             acc.limitUntil = toLocalISOString(d);
             renderClaudeTable();
             renderIdeKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
-            showToast(`${acc.name} diset limit hingga ${hours} jam ke depan`, 'fa-regular fa-clock text-orange-400');
+            triggerSaveAll();
+            showToast(`${acc.name} diset limit hingga ${formatDateTimeIndo(acc.limitUntil)}`, 'fa-regular fa-clock text-orange-400');
         }
 
         function clearClaudeLimit(id) {
@@ -791,40 +997,43 @@
             acc.limitUntil = '';
             renderClaudeTable();
             renderIdeKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
             showToast(`${acc.name} sudah Ready kembali!`);
         }
 
         function toggleAddClaudeForm() {
-            const form = document.getElementById('addClaudeForm');
-            form.classList.toggle('hidden');
+            const nameInput = document.getElementById('newClaudeName');
+            if (nameInput) nameInput.focus();
         }
 
         function addClaudeAccount() {
             const nameInput = document.getElementById('newClaudeName');
             const limitInput = document.getElementById('newClaudeLimit');
-            const name = nameInput.value.trim();
+            const name = nameInput ? nameInput.value.trim() : '';
             if (!name) {
-                showToast('Masukkan nama akun Claude terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                showToast('Masukkan Nama Akun Claude terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                if (nameInput) nameInput.focus();
                 return;
             }
+            const limitVal = limitInput && limitInput.value ? limitInput.value : '';
             claudeAccounts.push({
                 id: 'c_' + Date.now(),
-                name,
-                limitUntil: limitInput.value || ''
+                name: name,
+                limitUntil: limitVal
             });
             nameInput.value = '';
-            limitInput.value = '';
-            document.getElementById('addClaudeForm').classList.add('hidden');
+            if (limitInput) limitInput.value = '';
             renderClaudeTable();
-            if (window.saveStateToCloud) window.saveStateToCloud();
-            showToast('Akun Claude baru berhasil ditambahkan & disimpan!');
+            renderIdeKonten();
+            triggerSaveAll();
+            showToast(`Akun "${name}" berhasil ditambahkan & disimpan!`);
         }
 
         function deleteClaudeAccount(id) {
             claudeAccounts = claudeAccounts.filter(a => a.id !== id);
             renderClaudeTable();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            renderIdeKonten();
+            triggerSaveAll();
             showToast('Akun Claude dihapus', 'fa-regular fa-trash-can text-slate-400');
         }
 
@@ -854,7 +1063,7 @@
                 acc.limitUntil = document.getElementById('customLimitInput').value;
                 renderClaudeTable();
                 renderIdeKonten();
-                if (window.saveStateToCloud) window.saveStateToCloud();
+                triggerSaveAll();
                 showToast(`Batas limit ${acc.name} diperbarui & disimpan!`);
             }
             closeLimitModal();
@@ -1054,7 +1263,7 @@
             document.getElementById('newUpDesc').value = '';
             document.getElementById('addUpForm').classList.add('hidden');
             renderUpKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
             showToast('Konten masuk ke antrean jadwal tayang & tersimpan!');
         }
 
@@ -1063,7 +1272,7 @@
             if (!item) return;
             item.checked = !item.checked;
             renderUpKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
             if (item.checked) {
                 showToast('Konten selesai di-up & dipindahkan ke urutan paling bawah!');
             }
@@ -1074,7 +1283,7 @@
             if (!item) return;
             item.channelId = newChannelId;
             renderUpKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
             const ch = ytChannels.find(c => c.id === newChannelId);
             showToast(`Channel diubah ke ${ch ? ch.name : ''}`);
         }
@@ -1095,7 +1304,7 @@
         function deleteUpKonten(id) {
             upKontenList = upKontenList.filter(i => i.id !== id);
             renderUpKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
             showToast('Konten dihapus dari daftar Up Konten', 'fa-regular fa-trash-can text-slate-400');
         }
 
@@ -1215,7 +1424,7 @@
 
             ideInput.value = '';
             renderIdeKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
             showToast('Ide konten berhasil ditambahkan & disimpan!');
         }
 
@@ -1224,7 +1433,7 @@
             if (!item) return;
             item.checked = !item.checked;
             renderIdeKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
             if (item.checked) {
                 showToast('Ide selesai dieksekusi & turun ke urutan bawah!');
             }
@@ -1237,7 +1446,7 @@
             // Mark idea as checked & open Up Konten form pre-filled with this idea
             item.checked = true;
             renderIdeKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
 
             const form = document.getElementById('addUpForm');
             form.classList.remove('hidden');
@@ -1252,7 +1461,7 @@
         function deleteIdeKonten(id) {
             ideKontenList = ideKontenList.filter(i => i.id !== id);
             renderIdeKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
             showToast('Ide konten dihapus', 'fa-regular fa-trash-can text-slate-400');
         }
 
@@ -1289,7 +1498,7 @@
             });
             closeChannelModal();
             renderUpKonten();
-            if (window.saveStateToCloud) window.saveStateToCloud();
+            triggerSaveAll();
             showToast('Nama ke-6 Channel YouTube berhasil diperbarui & disimpan!');
         }
 
@@ -1330,7 +1539,7 @@
                     renderClaudeTable();
                     renderUpKonten();
                     renderIdeKonten();
-                    if (window.saveStateToCloud) window.saveStateToCloud();
+                    triggerSaveAll();
                     showToast('Data berhasil dipulihkan dari file Backup!');
                 } catch (err) {
                     showToast('Format file backup tidak valid!', 'fa-solid fa-triangle-exclamation text-rose-400');
@@ -1343,253 +1552,14 @@
         // ====================================================
         // 6C. GITHUB GIST CLOUD DATABASE SYNC (FOR GITHUB PAGES)
         // ====================================================
-        // Tips: Jika repo GitHub Anda berstatus PRIVATE, Anda juga bisa mengisi langsung
-        // ghSyncConfig di bawah ini agar tidak perlu input ulang saat halaman di-refresh.
         let ghSyncConfig = {
             token: '',
             gistId: ''
         };
 
         // ====================================================
-        // 6D. KONFIGURASI FIREBASE SENDIRI (UNTUK GITHUB PAGES)
-        // ====================================================
-        // PENTING: Sebelum upload ke GitHub Pages, tempelkan firebaseConfig dari
-        // Firebase Console Anda ke dalam objek CUSTOM_FIREBASE_CONFIG di bawah ini:
-        let CUSTOM_FIREBASE_CONFIG = {
-            apiKey: "",
-            authDomain: "",
-            projectId: "",
-            storageBucket: "",
-            messagingSenderId: "",
-            appId: ""
-        };
-
-        // Nama ruang kerja agar saat dibuka di Laptop & HP datanya tetap sama:
-        let WORKSPACE_KEY = "studio_utama";
-
-        function openFirebaseModal() {
-            document.getElementById('fbWorkspaceInput').value = WORKSPACE_KEY;
-            if (CUSTOM_FIREBASE_CONFIG && CUSTOM_FIREBASE_CONFIG.apiKey) {
-                document.getElementById('fbConfigInput').value = JSON.stringify(CUSTOM_FIREBASE_CONFIG, null, 2);
-            }
-            document.getElementById('firebaseModal').classList.remove('hidden');
-        }
-
-        function closeFirebaseModal() {
-            document.getElementById('firebaseModal').classList.add('hidden');
-        }
-
-        function parseFirebaseConfigInput(rawText) {
-            if (!rawText) return null;
-            // Ambil bagian di dalam kurung kurawal { ... } jika user paste lengkap dengan "const firebaseConfig = {...};"
-            const match = rawText.match(/\{[\s\S]*\}/);
-            const objectStr = match ? match[0] : rawText;
-
-            const normalized = objectStr
-                .replace(/\/\/.*$/gm, '') // hapus komentar satu baris
-                .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
-                .replace(/'/g, '"')
-                .replace(/,\s*\}/g, '}'); // hapus trailing comma
-
-            return JSON.parse(normalized);
-        }
-
-        function applyCustomFirebaseFromModal() {
-            const rawConfig = document.getElementById('fbConfigInput').value.trim();
-            const wsInput = document.getElementById('fbWorkspaceInput').value.trim();
-            if (wsInput) {
-                WORKSPACE_KEY = wsInput.replace(/[^a-zA-Z0-9_-]/g, '_');
-            }
-            if (rawConfig) {
-                try {
-                    const parsed = parseFirebaseConfigInput(rawConfig);
-                    if (!parsed || !parsed.apiKey || !parsed.projectId) {
-                        showToast('apiKey dan projectId wajib ada di dalam firebaseConfig!', 'fa-solid fa-triangle-exclamation text-amber-400');
-                        return;
-                    }
-                    CUSTOM_FIREBASE_CONFIG = parsed;
-                } catch (e) {
-                    showToast('Format firebaseConfig belum sesuai! Pastikan menyalin blok { ... } dengan lengkap.', 'fa-solid fa-triangle-exclamation text-rose-400');
-                    return;
-                }
-            }
-            closeFirebaseModal();
-            if (window.reconnectFirebaseCloud) {
-                window.reconnectFirebaseCloud();
-            }
-        }
-
-        function downloadHtmlWithFirebaseConfig() {
-            const rawConfig = document.getElementById('fbConfigInput').value.trim();
-            const wsInput = document.getElementById('fbWorkspaceInput').value.trim() || 'studio_utama';
-            const cleanWorkspace = wsInput.replace(/[^a-zA-Z0-9_-]/g, '_');
-
-            let parsed = CUSTOM_FIREBASE_CONFIG;
-            if (rawConfig) {
-                try {
-                    parsed = parseFirebaseConfigInput(rawConfig);
-                } catch (e) {
-                    showToast('Format firebaseConfig belum valid! Periksa kembali teks yang Anda paste.', 'fa-solid fa-triangle-exclamation text-rose-400');
-                    return;
-                }
-            }
-
-            if (!parsed || !parsed.apiKey || !parsed.projectId) {
-                showToast('Paste firebaseConfig dari Firebase Console terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
-                return;
-            }
-
-            CUSTOM_FIREBASE_CONFIG = parsed;
-            WORKSPACE_KEY = cleanWorkspace;
-
-            // Ambil source HTML dan tanamkan CUSTOM_FIREBASE_CONFIG & WORKSPACE_KEY secara permanen
-            let fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-            const configRegex = /let CUSTOM_FIREBASE_CONFIG = \{[\s\S]*?\};/;
-            const wsRegex = /let WORKSPACE_KEY = "[^"]*";/;
-
-            fullHtml = fullHtml.replace(
-                configRegex,
-                `let CUSTOM_FIREBASE_CONFIG = ${JSON.stringify(parsed, null, 12)};`
-            );
-            fullHtml = fullHtml.replace(
-                wsRegex,
-                `let WORKSPACE_KEY = "${cleanWorkspace}";`
-            );
-
-            const blob = new Blob([fullHtml], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'index.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            showToast('File index.html (sudah terisi Firebase Anda) berhasil diunduh! Siap di-upload ke GitHub.');
-        }
-
-        function openGithubSyncModal() {
-            document.getElementById('ghTokenInput').value = ghSyncConfig.token;
-            document.getElementById('ghGistIdInput').value = ghSyncConfig.gistId;
-            document.getElementById('githubSyncModal').classList.remove('hidden');
-        }
-
-        function closeGithubSyncModal() {
-            document.getElementById('githubSyncModal').classList.add('hidden');
-        }
-
-        async function saveToGithubGist() {
-            if (!ghSyncConfig.token || !ghSyncConfig.gistId) return false;
-            const badge = document.getElementById('syncStatusBadge');
-            const icon = document.getElementById('syncStatusIcon');
-            const text = document.getElementById('syncStatusText');
-
-            try {
-                if (text) text.textContent = 'Menyimpan ke GitHub...';
-                const payload = {
-                    updatedAt: new Date().toISOString(),
-                    ytChannels,
-                    claudeAccounts,
-                    upKontenList,
-                    ideKontenList
-                };
-
-                const res = await fetch(`https://api.github.com/gists/${ghSyncConfig.gistId.trim()}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${ghSyncConfig.token.trim()}`,
-                        'Accept': 'application/vnd.github+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        description: 'AI Creator Hub - Auto Saved Progress',
-                        files: {
-                            'data.json': {
-                                content: JSON.stringify(payload, null, 2)
-                            }
-                        }
-                    })
-                });
-
-                if (!res.ok) throw new Error('Gagal menyimpan ke GitHub Gist');
-
-                if (badge && icon && text) {
-                    badge.className = 'flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs';
-                    icon.className = 'fa-brands fa-github text-emerald-400';
-                    text.className = 'font-medium text-emerald-300';
-                    text.textContent = 'Tersimpan di GitHub Gist';
-                }
-                return true;
-            } catch (err) {
-                console.error(err);
-                if (text) text.textContent = 'Gagal Sinkron GitHub';
-                return false;
-            }
-        }
-
-        async function connectAndSaveGithubGist() {
-            const token = document.getElementById('ghTokenInput').value.trim();
-            const gistId = document.getElementById('ghGistIdInput').value.trim();
-            if (!token || !gistId) {
-                showToast('Masukkan Token dan Gist ID terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
-                return;
-            }
-            ghSyncConfig.token = token;
-            ghSyncConfig.gistId = gistId;
-            const ok = await saveToGithubGist();
-            if (ok) {
-                closeGithubSyncModal();
-                showToast('Berhasil terhubung & tersimpan ke GitHub Gist!');
-            } else {
-                showToast('Gagal terhubung! Periksa kembali Token & Gist ID Anda.', 'fa-solid fa-triangle-exclamation text-rose-400');
-            }
-        }
-
-        async function loadFromGithubGist() {
-            const token = document.getElementById('ghTokenInput').value.trim() || ghSyncConfig.token;
-            const gistId = document.getElementById('ghGistIdInput').value.trim() || ghSyncConfig.gistId;
-            if (!gistId) {
-                showToast('Masukkan Gist ID terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
-                return;
-            }
-            try {
-                const headers = { 'Accept': 'application/vnd.github+json' };
-                if (token) headers['Authorization'] = `Bearer ${token}`;
-
-                const res = await fetch(`https://api.github.com/gists/${gistId}`, { headers });
-                if (!res.ok) throw new Error('Gist tidak ditemukan');
-
-                const gist = await res.json();
-                const fileObj = gist.files['data.json'] || Object.values(gist.files)[0];
-                if (!fileObj || !fileObj.content) throw new Error('File data.json kosong');
-
-                const data = JSON.parse(fileObj.content);
-                if (Array.isArray(data.ytChannels)) ytChannels = data.ytChannels;
-                if (Array.isArray(data.claudeAccounts)) claudeAccounts = data.claudeAccounts;
-                if (Array.isArray(data.upKontenList)) upKontenList = data.upKontenList;
-                if (Array.isArray(data.ideKontenList)) ideKontenList = data.ideKontenList;
-
-                ghSyncConfig.token = token;
-                ghSyncConfig.gistId = gistId;
-
-                renderClaudeTable();
-                renderUpKonten();
-                renderIdeKonten();
-                closeGithubSyncModal();
-                showToast('Data berhasil dimuat dari GitHub Gist!');
-            } catch (err) {
-                showToast('Gagal memuat dari Gist! Pastikan Gist ID benar.', 'fa-solid fa-triangle-exclamation text-rose-400');
-            }
-        }
-
-        // ====================================================
-        // 7. TAB NAVIGATION & LIVE CLOCK
-        // ====================================================
         // 6D. KONFIGURASI FIREBASE MILIK ANDA (SUDAH TERPASANG)
         // ====================================================
-        // Kode firebaseConfig dari project "ai-creator-studio-dashboard" Anda
-        // sudah ditanamkan langsung di bawah ini. Tidak perlu diedit lagi!
         const USER_FIREBASE_CONFIG = {
             apiKey: "AIzaSyAL3e64No04PxuwfbsKlnsbeVOaqE_cdhU",
             authDomain: "ai-creator-studio-dashboard.firebaseapp.com",
@@ -1602,8 +1572,8 @@
 
         let CUSTOM_FIREBASE_CONFIG = { ...USER_FIREBASE_CONFIG };
 
-        // Nama ruang kerja agar saat dibuka di Laptop & HP datanya selalu sama:
-        let WORKSPACE_KEY = "workspace_main";
+        // Nama dokumen utama di Firestore agar saat dibuka di Laptop & HP datanya selalu sama:
+        let WORKSPACE_KEY = "main_state";
 
         function openFirebaseModal() {
             document.getElementById('fbWorkspaceInput').value = WORKSPACE_KEY;
@@ -1659,7 +1629,7 @@
         function downloadHtmlWithFirebaseConfig() {
             const rawConfig = document.getElementById('fbConfigInput') ? document.getElementById('fbConfigInput').value.trim() : '';
             const wsInput = document.getElementById('fbWorkspaceInput') ? document.getElementById('fbWorkspaceInput').value.trim() : WORKSPACE_KEY;
-            const cleanWorkspace = (wsInput || 'workspace_main').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const cleanWorkspace = (wsInput || 'main_state').replace(/[^a-zA-Z0-9_-]/g, '_');
 
             let parsed = CUSTOM_FIREBASE_CONFIG;
             if (rawConfig) {
@@ -1852,7 +1822,12 @@
             if (e.key === 'Enter') addIdeKonten();
         });
 
+        document.getElementById('newClaudeName').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') addClaudeAccount();
+        });
+
         window.onload = function () {
+            loadFromLocalCache();
             updateLiveClock();
             renderClaudeTable();
             renderUpKonten();
@@ -1860,12 +1835,8 @@
 
             setInterval(() => {
                 updateLiveClock();
+                updateClaudeCountdownsTick();
             }, 1000);
-
-            setInterval(() => {
-                renderClaudeTable();
-                renderUpKonten();
-            }, 30000);
         };
     </script>
 
@@ -1909,7 +1880,6 @@
                 const auth = getAuth(app);
                 const db = getFirestore(app);
 
-                // Coba login Anonymous (jika belum di-enable di Console, tetap lanjutkan ke Firestore Test Mode)
                 try {
                     await signInAnonymously(auth);
                 } catch (authErr) {
@@ -1917,8 +1887,8 @@
                 }
 
                 // Dokumen utama di Firestore project "ai-creator-studio-dashboard" Anda:
-                // Koleksi: ai_creator_dashboard -> Dokumen: workspace_main
-                const stateDocRef = doc(db, 'ai_creator_dashboard', WORKSPACE_KEY || 'workspace_main');
+                // Koleksi: ai_creator_dashboard -> Dokumen: main_state
+                const stateDocRef = doc(db, 'ai_creator_dashboard', WORKSPACE_KEY || 'main_state');
 
                 let isSavingLocalChange = false;
 
@@ -1926,17 +1896,18 @@
                     try {
                         isSavingLocalChange = true;
                         setSyncIndicator('saving', 'Menyimpan ke Firebase...');
-                        await setDoc(stateDocRef, {
+                        const cleanPayload = JSON.parse(JSON.stringify({
                             ytChannels,
                             claudeAccounts,
                             upKontenList,
                             ideKontenList,
                             updatedAt: Date.now()
-                        });
+                        }));
+                        await setDoc(stateDocRef, cleanPayload);
                         setSyncIndicator('saved', `Tersimpan (${activeFirebaseConfig.projectId})`);
                     } catch (err) {
                         console.error('Gagal menyimpan ke Firestore:', err);
-                        setSyncIndicator('error', 'Cek Rules Firestore (Test Mode)');
+                        setSyncIndicator('error', 'Tersimpan Lokal (Cek Rules Firestore)');
                     } finally {
                         setTimeout(() => { isSavingLocalChange = false; }, 300);
                     }
@@ -1952,6 +1923,7 @@
                                 if (Array.isArray(data.claudeAccounts)) claudeAccounts = data.claudeAccounts;
                                 if (Array.isArray(data.upKontenList)) upKontenList = data.upKontenList;
                                 if (Array.isArray(data.ideKontenList)) ideKontenList = data.ideKontenList;
+                                saveToLocalCache();
                                 renderClaudeTable();
                                 renderUpKonten();
                                 renderIdeKonten();
@@ -1966,7 +1938,7 @@
                     },
                     (error) => {
                         console.error('Error membaca Firestore:', error);
-                        setSyncIndicator('error', 'Pastikan Rules Firestore = allow read, write: if true;');
+                        setSyncIndicator('error', 'Tersimpan Lokal (Cek Rules Firestore)');
                     }
                 );
             } catch (err) {
