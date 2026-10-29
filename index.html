@@ -106,6 +106,14 @@
                     <span class="hidden sm:inline">Restore</span>
                     <input type="file" accept=".json" onchange="importBackupData(event)" class="hidden">
                 </label>
+                <button onclick="downloadHtmlWithFirebaseConfig()" title="Download file index.html yang sudah terisi Firebase Anda untuk di-upload ke GitHub" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    <span>Download index.html</span>
+                </button>
+                <button onclick="openFirebaseModal()" title="Lihat / Ubah Konfigurasi Firebase" class="bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-fire text-amber-400"></i>
+                    <span>Firebase Aktif</span>
+                </button>
             </div>
         </div>
 
@@ -394,6 +402,114 @@
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
                 <button onclick="closeLimitModal()" class="px-3 py-1.5 rounded-xl text-xs bg-slate-800 text-slate-300">Batal</button>
                 <button onclick="saveCustomLimitModal()" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white">Simpan Limit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL: PENGATURAN GITHUB GIST AUTO-SYNC
+         ========================================== -->
+    <div id="githubSyncModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-brands fa-github text-white text-xl"></i>
+                    <h3 class="text-base sm:text-lg font-bold text-white">Sinkronisasi Database GitHub Gist</h3>
+                </div>
+                <button onclick="closeGithubSyncModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                <p class="font-semibold text-orange-400"><i class="fa-solid fa-circle-info mr-1"></i> Kenapa perlu ini saat di-upload ke GitHub?</p>
+                <p class="text-slate-400">GitHub Pages sifatnya statis (hanya menampilkan HTML). Agar perubahan jadwal & limit otomatis tersimpan ke akun GitHub Anda, hubungkan dengan <strong>GitHub Gist</strong> gratis milik Anda sendiri:</p>
+                <ol class="list-decimal list-inside text-slate-400 space-y-1 pt-1">
+                    <li>Buat Secret Gist baru di <strong>gist.github.com</strong> dengan nama file <code class="text-amber-300">data.json</code> dan isi awal <code class="text-amber-300">{}</code>, lalu salin <strong>Gist ID</strong> dari URL-nya.</li>
+                    <li>Buat Token di <strong>GitHub Settings &rarr; Developer Settings &rarr; Personal Access Tokens (Classic)</strong>, centang izin <strong><code>gist</code></strong>.</li>
+                </ol>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1 font-medium">GitHub Personal Access Token (Izin: gist)</label>
+                    <input type="password" id="ghTokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1 font-medium">Gist ID (Kode unik di akhir URL Gist Anda)</label>
+                    <input type="text" id="ghGistIdInput" placeholder="Contoh: a1b2c3d4e5f6g7h8i9j0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800">
+                <button onclick="loadFromGithubGist()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> Muat Data dari Gist
+                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeGithubSyncModal()" class="px-3.5 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300">Tutup</button>
+                    <button onclick="connectAndSaveGithubGist()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-link"></i> Hubungkan & Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL: SETUP FIREBASE FIRESTORE (UNTUK GITHUB PAGES)
+         ========================================== -->
+    <div id="firebaseModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-fire text-amber-400 text-xl"></i>
+                    <h3 class="text-base sm:text-lg font-bold text-white">Koneksi Database Firebase (Realtime Auto-Save)</h3>
+                </div>
+                <button onclick="closeFirebaseModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-300 space-y-2 leading-relaxed">
+                <p class="font-semibold text-amber-400"><i class="fa-solid fa-bolt mr-1"></i> Cara Menghubungkan ke Firebase Gratis Anda:</p>
+                <ol class="list-decimal list-inside text-slate-400 space-y-1.5">
+                    <li>Buka <strong>console.firebase.google.com</strong> &rarr; klik <strong>Create a project</strong>.</li>
+                    <li>Di menu kiri pilih <strong>Build &rarr; Authentication</strong> &rarr; klik <em>Get Started</em> &rarr; aktifkan <strong>Anonymous</strong>.</li>
+                    <li>Pilih <strong>Build &rarr; Firestore Database</strong> &rarr; klik <em>Create Database</em> &rarr; pilih <strong>Start in test mode</strong>.</li>
+                    <li>Klik ikon <strong>Gear (Project Settings)</strong> &rarr; scroll ke bawah klik ikon Web <strong><code>&lt;/&gt;</code></strong> &rarr; salin isi objek <strong><code>firebaseConfig</code></strong>.</li>
+                    <li>Agar permanen saat di-upload ke GitHub, tempelkan konfigurasi Anda di variabel <strong><code>CUSTOM_FIREBASE_CONFIG</code></strong> di dalam kode <code>index.html</code> (atau uji langsung di kolom bawah ini).</li>
+                </ol>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1 font-medium">Workspace ID / Kode Ruang Kerja (Agar HP & Laptop Sinkron Sama)</label>
+                    <input type="text" id="fbWorkspaceInput" value="studio_utama" placeholder="Contoh: studio_utama" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-300 mb-1 font-medium">Paste <code>firebaseConfig</code> dari Firebase Console</label>
+                    <textarea id="fbConfigInput" rows="6" placeholder='Bisa langsung paste seluruh blok const firebaseConfig = { apiKey: "...", projectId: "..." }; dari Firebase Console di sini' class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-amber-200 focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+            </div>
+
+            <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="text-xs text-amber-200">
+                    <span class="font-bold block">Mau langsung upload ke GitHub tanpa edit kodingan?</span>
+                    <span class="text-slate-400 text-[11px]">Paste config di atas, lalu klik tombol di samping untuk mengunduh file <code>index.html</code> yang sudah berisi Firebase Anda.</span>
+                </div>
+                <button onclick="downloadHtmlWithFirebaseConfig()" class="whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+                    <i class="fa-solid fa-file-code"></i> Download index.html Siap Upload
+                </button>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800">
+                <span class="text-[11px] text-slate-400">Status saat ini: <strong id="fbModalStatusText" class="text-emerald-400">Aktif</strong></span>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeFirebaseModal()" class="px-3.5 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300">Tutup</button>
+                    <button onclick="applyCustomFirebaseFromModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-slate-950 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-fire"></i> Hubungkan Firebase Sekarang
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1225,6 +1341,464 @@
         }
 
         // ====================================================
+        // 6C. GITHUB GIST CLOUD DATABASE SYNC (FOR GITHUB PAGES)
+        // ====================================================
+        // Tips: Jika repo GitHub Anda berstatus PRIVATE, Anda juga bisa mengisi langsung
+        // ghSyncConfig di bawah ini agar tidak perlu input ulang saat halaman di-refresh.
+        let ghSyncConfig = {
+            token: '',
+            gistId: ''
+        };
+
+        // ====================================================
+        // 6D. KONFIGURASI FIREBASE SENDIRI (UNTUK GITHUB PAGES)
+        // ====================================================
+        // PENTING: Sebelum upload ke GitHub Pages, tempelkan firebaseConfig dari
+        // Firebase Console Anda ke dalam objek CUSTOM_FIREBASE_CONFIG di bawah ini:
+        let CUSTOM_FIREBASE_CONFIG = {
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        // Nama ruang kerja agar saat dibuka di Laptop & HP datanya tetap sama:
+        let WORKSPACE_KEY = "studio_utama";
+
+        function openFirebaseModal() {
+            document.getElementById('fbWorkspaceInput').value = WORKSPACE_KEY;
+            if (CUSTOM_FIREBASE_CONFIG && CUSTOM_FIREBASE_CONFIG.apiKey) {
+                document.getElementById('fbConfigInput').value = JSON.stringify(CUSTOM_FIREBASE_CONFIG, null, 2);
+            }
+            document.getElementById('firebaseModal').classList.remove('hidden');
+        }
+
+        function closeFirebaseModal() {
+            document.getElementById('firebaseModal').classList.add('hidden');
+        }
+
+        function parseFirebaseConfigInput(rawText) {
+            if (!rawText) return null;
+            // Ambil bagian di dalam kurung kurawal { ... } jika user paste lengkap dengan "const firebaseConfig = {...};"
+            const match = rawText.match(/\{[\s\S]*\}/);
+            const objectStr = match ? match[0] : rawText;
+
+            const normalized = objectStr
+                .replace(/\/\/.*$/gm, '') // hapus komentar satu baris
+                .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
+                .replace(/'/g, '"')
+                .replace(/,\s*\}/g, '}'); // hapus trailing comma
+
+            return JSON.parse(normalized);
+        }
+
+        function applyCustomFirebaseFromModal() {
+            const rawConfig = document.getElementById('fbConfigInput').value.trim();
+            const wsInput = document.getElementById('fbWorkspaceInput').value.trim();
+            if (wsInput) {
+                WORKSPACE_KEY = wsInput.replace(/[^a-zA-Z0-9_-]/g, '_');
+            }
+            if (rawConfig) {
+                try {
+                    const parsed = parseFirebaseConfigInput(rawConfig);
+                    if (!parsed || !parsed.apiKey || !parsed.projectId) {
+                        showToast('apiKey dan projectId wajib ada di dalam firebaseConfig!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                        return;
+                    }
+                    CUSTOM_FIREBASE_CONFIG = parsed;
+                } catch (e) {
+                    showToast('Format firebaseConfig belum sesuai! Pastikan menyalin blok { ... } dengan lengkap.', 'fa-solid fa-triangle-exclamation text-rose-400');
+                    return;
+                }
+            }
+            closeFirebaseModal();
+            if (window.reconnectFirebaseCloud) {
+                window.reconnectFirebaseCloud();
+            }
+        }
+
+        function downloadHtmlWithFirebaseConfig() {
+            const rawConfig = document.getElementById('fbConfigInput').value.trim();
+            const wsInput = document.getElementById('fbWorkspaceInput').value.trim() || 'studio_utama';
+            const cleanWorkspace = wsInput.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+            let parsed = CUSTOM_FIREBASE_CONFIG;
+            if (rawConfig) {
+                try {
+                    parsed = parseFirebaseConfigInput(rawConfig);
+                } catch (e) {
+                    showToast('Format firebaseConfig belum valid! Periksa kembali teks yang Anda paste.', 'fa-solid fa-triangle-exclamation text-rose-400');
+                    return;
+                }
+            }
+
+            if (!parsed || !parsed.apiKey || !parsed.projectId) {
+                showToast('Paste firebaseConfig dari Firebase Console terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+
+            CUSTOM_FIREBASE_CONFIG = parsed;
+            WORKSPACE_KEY = cleanWorkspace;
+
+            // Ambil source HTML dan tanamkan CUSTOM_FIREBASE_CONFIG & WORKSPACE_KEY secara permanen
+            let fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+            const configRegex = /let CUSTOM_FIREBASE_CONFIG = \{[\s\S]*?\};/;
+            const wsRegex = /let WORKSPACE_KEY = "[^"]*";/;
+
+            fullHtml = fullHtml.replace(
+                configRegex,
+                `let CUSTOM_FIREBASE_CONFIG = ${JSON.stringify(parsed, null, 12)};`
+            );
+            fullHtml = fullHtml.replace(
+                wsRegex,
+                `let WORKSPACE_KEY = "${cleanWorkspace}";`
+            );
+
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('File index.html (sudah terisi Firebase Anda) berhasil diunduh! Siap di-upload ke GitHub.');
+        }
+
+        function openGithubSyncModal() {
+            document.getElementById('ghTokenInput').value = ghSyncConfig.token;
+            document.getElementById('ghGistIdInput').value = ghSyncConfig.gistId;
+            document.getElementById('githubSyncModal').classList.remove('hidden');
+        }
+
+        function closeGithubSyncModal() {
+            document.getElementById('githubSyncModal').classList.add('hidden');
+        }
+
+        async function saveToGithubGist() {
+            if (!ghSyncConfig.token || !ghSyncConfig.gistId) return false;
+            const badge = document.getElementById('syncStatusBadge');
+            const icon = document.getElementById('syncStatusIcon');
+            const text = document.getElementById('syncStatusText');
+
+            try {
+                if (text) text.textContent = 'Menyimpan ke GitHub...';
+                const payload = {
+                    updatedAt: new Date().toISOString(),
+                    ytChannels,
+                    claudeAccounts,
+                    upKontenList,
+                    ideKontenList
+                };
+
+                const res = await fetch(`https://api.github.com/gists/${ghSyncConfig.gistId.trim()}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${ghSyncConfig.token.trim()}`,
+                        'Accept': 'application/vnd.github+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        description: 'AI Creator Hub - Auto Saved Progress',
+                        files: {
+                            'data.json': {
+                                content: JSON.stringify(payload, null, 2)
+                            }
+                        }
+                    })
+                });
+
+                if (!res.ok) throw new Error('Gagal menyimpan ke GitHub Gist');
+
+                if (badge && icon && text) {
+                    badge.className = 'flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs';
+                    icon.className = 'fa-brands fa-github text-emerald-400';
+                    text.className = 'font-medium text-emerald-300';
+                    text.textContent = 'Tersimpan di GitHub Gist';
+                }
+                return true;
+            } catch (err) {
+                console.error(err);
+                if (text) text.textContent = 'Gagal Sinkron GitHub';
+                return false;
+            }
+        }
+
+        async function connectAndSaveGithubGist() {
+            const token = document.getElementById('ghTokenInput').value.trim();
+            const gistId = document.getElementById('ghGistIdInput').value.trim();
+            if (!token || !gistId) {
+                showToast('Masukkan Token dan Gist ID terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+            ghSyncConfig.token = token;
+            ghSyncConfig.gistId = gistId;
+            const ok = await saveToGithubGist();
+            if (ok) {
+                closeGithubSyncModal();
+                showToast('Berhasil terhubung & tersimpan ke GitHub Gist!');
+            } else {
+                showToast('Gagal terhubung! Periksa kembali Token & Gist ID Anda.', 'fa-solid fa-triangle-exclamation text-rose-400');
+            }
+        }
+
+        async function loadFromGithubGist() {
+            const token = document.getElementById('ghTokenInput').value.trim() || ghSyncConfig.token;
+            const gistId = document.getElementById('ghGistIdInput').value.trim() || ghSyncConfig.gistId;
+            if (!gistId) {
+                showToast('Masukkan Gist ID terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+            try {
+                const headers = { 'Accept': 'application/vnd.github+json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch(`https://api.github.com/gists/${gistId}`, { headers });
+                if (!res.ok) throw new Error('Gist tidak ditemukan');
+
+                const gist = await res.json();
+                const fileObj = gist.files['data.json'] || Object.values(gist.files)[0];
+                if (!fileObj || !fileObj.content) throw new Error('File data.json kosong');
+
+                const data = JSON.parse(fileObj.content);
+                if (Array.isArray(data.ytChannels)) ytChannels = data.ytChannels;
+                if (Array.isArray(data.claudeAccounts)) claudeAccounts = data.claudeAccounts;
+                if (Array.isArray(data.upKontenList)) upKontenList = data.upKontenList;
+                if (Array.isArray(data.ideKontenList)) ideKontenList = data.ideKontenList;
+
+                ghSyncConfig.token = token;
+                ghSyncConfig.gistId = gistId;
+
+                renderClaudeTable();
+                renderUpKonten();
+                renderIdeKonten();
+                closeGithubSyncModal();
+                showToast('Data berhasil dimuat dari GitHub Gist!');
+            } catch (err) {
+                showToast('Gagal memuat dari Gist! Pastikan Gist ID benar.', 'fa-solid fa-triangle-exclamation text-rose-400');
+            }
+        }
+
+        // ====================================================
+        // 7. TAB NAVIGATION & LIVE CLOCK
+        // ====================================================
+        // 6D. KONFIGURASI FIREBASE MILIK ANDA (SUDAH TERPASANG)
+        // ====================================================
+        // Kode firebaseConfig dari project "ai-creator-studio-dashboard" Anda
+        // sudah ditanamkan langsung di bawah ini. Tidak perlu diedit lagi!
+        const USER_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAL3e64No04PxuwfbsKlnsbeVOaqE_cdhU",
+            authDomain: "ai-creator-studio-dashboard.firebaseapp.com",
+            projectId: "ai-creator-studio-dashboard",
+            storageBucket: "ai-creator-studio-dashboard.firebasestorage.app",
+            messagingSenderId: "607044520139",
+            appId: "1:607044520139:web:7d809f9fac36ba5cbf734e",
+            measurementId: "G-BQN364KCN0"
+        };
+
+        let CUSTOM_FIREBASE_CONFIG = { ...USER_FIREBASE_CONFIG };
+
+        // Nama ruang kerja agar saat dibuka di Laptop & HP datanya selalu sama:
+        let WORKSPACE_KEY = "workspace_main";
+
+        function openFirebaseModal() {
+            document.getElementById('fbWorkspaceInput').value = WORKSPACE_KEY;
+            if (CUSTOM_FIREBASE_CONFIG && CUSTOM_FIREBASE_CONFIG.apiKey) {
+                document.getElementById('fbConfigInput').value = JSON.stringify(CUSTOM_FIREBASE_CONFIG, null, 2);
+            }
+            document.getElementById('firebaseModal').classList.remove('hidden');
+        }
+
+        function closeFirebaseModal() {
+            document.getElementById('firebaseModal').classList.add('hidden');
+        }
+
+        function parseFirebaseConfigInput(rawText) {
+            if (!rawText) return null;
+            const match = rawText.match(/\{[\s\S]*\}/);
+            const objectStr = match ? match[0] : rawText;
+
+            const normalized = objectStr
+                .replace(/\/\/.*$/gm, '')
+                .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
+                .replace(/'/g, '"')
+                .replace(/,\s*\}/g, '}');
+
+            return JSON.parse(normalized);
+        }
+
+        function applyCustomFirebaseFromModal() {
+            const rawConfig = document.getElementById('fbConfigInput').value.trim();
+            const wsInput = document.getElementById('fbWorkspaceInput').value.trim();
+            if (wsInput) {
+                WORKSPACE_KEY = wsInput.replace(/[^a-zA-Z0-9_-]/g, '_');
+            }
+            if (rawConfig) {
+                try {
+                    const parsed = parseFirebaseConfigInput(rawConfig);
+                    if (!parsed || !parsed.apiKey || !parsed.projectId) {
+                        showToast('apiKey dan projectId wajib ada di dalam firebaseConfig!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                        return;
+                    }
+                    CUSTOM_FIREBASE_CONFIG = parsed;
+                } catch (e) {
+                    showToast('Format firebaseConfig belum sesuai! Pastikan menyalin blok { ... } dengan lengkap.', 'fa-solid fa-triangle-exclamation text-rose-400');
+                    return;
+                }
+            }
+            closeFirebaseModal();
+            if (window.reconnectFirebaseCloud) {
+                window.reconnectFirebaseCloud();
+            }
+        }
+
+        function downloadHtmlWithFirebaseConfig() {
+            const rawConfig = document.getElementById('fbConfigInput') ? document.getElementById('fbConfigInput').value.trim() : '';
+            const wsInput = document.getElementById('fbWorkspaceInput') ? document.getElementById('fbWorkspaceInput').value.trim() : WORKSPACE_KEY;
+            const cleanWorkspace = (wsInput || 'workspace_main').replace(/[^a-zA-Z0-9_-]/g, '_');
+
+            let parsed = CUSTOM_FIREBASE_CONFIG;
+            if (rawConfig) {
+                try {
+                    parsed = parseFirebaseConfigInput(rawConfig);
+                } catch (e) {
+                    parsed = CUSTOM_FIREBASE_CONFIG;
+                }
+            }
+
+            CUSTOM_FIREBASE_CONFIG = parsed;
+            WORKSPACE_KEY = cleanWorkspace;
+
+            let fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+            const configRegex = /const USER_FIREBASE_CONFIG = \{[\s\S]*?\};/;
+            const wsRegex = /let WORKSPACE_KEY = "[^"]*";/;
+
+            fullHtml = fullHtml.replace(
+                configRegex,
+                `const USER_FIREBASE_CONFIG = ${JSON.stringify(parsed, null, 12)};`
+            );
+            fullHtml = fullHtml.replace(
+                wsRegex,
+                `let WORKSPACE_KEY = "${cleanWorkspace}";`
+            );
+
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('File index.html (sudah tertanam Firebase Anda) berhasil diunduh! Siap di-upload ke GitHub.');
+        }
+
+        function openGithubSyncModal() {
+            document.getElementById('ghTokenInput').value = ghSyncConfig.token;
+            document.getElementById('ghGistIdInput').value = ghSyncConfig.gistId;
+            document.getElementById('githubSyncModal').classList.remove('hidden');
+        }
+
+        function closeGithubSyncModal() {
+            document.getElementById('githubSyncModal').classList.add('hidden');
+        }
+
+        async function saveToGithubGist() {
+            if (!ghSyncConfig.token || !ghSyncConfig.gistId) return false;
+            try {
+                const payload = {
+                    updatedAt: new Date().toISOString(),
+                    ytChannels,
+                    claudeAccounts,
+                    upKontenList,
+                    ideKontenList
+                };
+
+                const res = await fetch(`https://api.github.com/gists/${ghSyncConfig.gistId.trim()}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${ghSyncConfig.token.trim()}`,
+                        'Accept': 'application/vnd.github+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        description: 'AI Creator Hub - Auto Saved Progress',
+                        files: {
+                            'data.json': {
+                                content: JSON.stringify(payload, null, 2)
+                            }
+                        }
+                    })
+                });
+                return res.ok;
+            } catch (err) {
+                console.error(err);
+                return false;
+            }
+        }
+
+        async function connectAndSaveGithubGist() {
+            const token = document.getElementById('ghTokenInput').value.trim();
+            const gistId = document.getElementById('ghGistIdInput').value.trim();
+            if (!token || !gistId) {
+                showToast('Masukkan Token dan Gist ID terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+            ghSyncConfig.token = token;
+            ghSyncConfig.gistId = gistId;
+            const ok = await saveToGithubGist();
+            if (ok) {
+                closeGithubSyncModal();
+                showToast('Berhasil terhubung & tersimpan ke GitHub Gist!');
+            } else {
+                showToast('Gagal terhubung! Periksa kembali Token & Gist ID Anda.', 'fa-solid fa-triangle-exclamation text-rose-400');
+            }
+        }
+
+        async function loadFromGithubGist() {
+            const token = document.getElementById('ghTokenInput').value.trim() || ghSyncConfig.token;
+            const gistId = document.getElementById('ghGistIdInput').value.trim() || ghSyncConfig.gistId;
+            if (!gistId) {
+                showToast('Masukkan Gist ID terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+            try {
+                const headers = { 'Accept': 'application/vnd.github+json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch(`https://api.github.com/gists/${gistId}`, { headers });
+                if (!res.ok) throw new Error('Gist tidak ditemukan');
+
+                const gist = await res.json();
+                const fileObj = gist.files['data.json'] || Object.values(gist.files)[0];
+                if (!fileObj || !fileObj.content) throw new Error('File data.json kosong');
+
+                const data = JSON.parse(fileObj.content);
+                if (Array.isArray(data.ytChannels)) ytChannels = data.ytChannels;
+                if (Array.isArray(data.claudeAccounts)) claudeAccounts = data.claudeAccounts;
+                if (Array.isArray(data.upKontenList)) upKontenList = data.upKontenList;
+                if (Array.isArray(data.ideKontenList)) ideKontenList = data.ideKontenList;
+
+                ghSyncConfig.token = token;
+                ghSyncConfig.gistId = gistId;
+
+                renderClaudeTable();
+                renderUpKonten();
+                renderIdeKonten();
+                closeGithubSyncModal();
+                showToast('Data berhasil dimuat dari GitHub Gist!');
+            } catch (err) {
+                showToast('Gagal memuat dari Gist! Pastikan Gist ID benar.', 'fa-solid fa-triangle-exclamation text-rose-400');
+            }
+        }
+
+        // ====================================================
         // 7. TAB NAVIGATION & LIVE CLOCK
         // ====================================================
         function switchTab(tab) {
@@ -1233,7 +1807,6 @@
             const secUp = document.getElementById('section-up');
             const topGrid = document.getElementById('topGridContainer');
 
-            // Reset tab buttons style
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.className = 'tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800';
             });
@@ -1275,12 +1848,10 @@
             document.getElementById('liveClock').textContent = `${hari}, ${d.getDate()} ${bln} ${d.getFullYear()} • ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} WIB`;
         }
 
-        // Allow Enter key on Ide Konten input
         document.getElementById('inputIdeText').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') addIdeKonten();
         });
 
-        // Initial Render & Live Refresh Timer
         window.onload = function () {
             updateLiveClock();
             renderClaudeTable();
@@ -1291,7 +1862,6 @@
                 updateLiveClock();
             }, 1000);
 
-            // Refresh countdowns every 30 seconds
             setInterval(() => {
                 renderClaudeTable();
                 renderUpKonten();
@@ -1299,10 +1869,10 @@
         };
     </script>
 
-    <!-- Cloud Auto-Save Synchronization Module -->
+    <!-- Cloud Auto-Save Synchronization Module (Terhubung ke ai-creator-studio-dashboard) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const badge = document.getElementById('syncStatusBadge');
@@ -1329,39 +1899,33 @@
 
         async function initCloudStorage() {
             try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+                const activeFirebaseConfig = (CUSTOM_FIREBASE_CONFIG && CUSTOM_FIREBASE_CONFIG.apiKey)
+                    ? CUSTOM_FIREBASE_CONFIG
+                    : USER_FIREBASE_CONFIG;
 
-                if (!firebaseConfig) {
-                    setSyncIndicator('saved', 'Mode Sesi Aktif (Gunakan Backup)');
-                    return;
-                }
+                setSyncIndicator('saving', 'Menghubungkan Firebase...');
 
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp(activeFirebaseConfig, 'creator_app_' + Date.now());
                 const auth = getAuth(app);
                 const db = getFirestore(app);
 
-                // RULE 3: Auth Before Queries
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
+                // Coba login Anonymous (jika belum di-enable di Console, tetap lanjutkan ke Firestore Test Mode)
+                try {
                     await signInAnonymously(auth);
+                } catch (authErr) {
+                    console.warn('Info: Anonymous Auth belum aktif, menggunakan akses langsung Firestore Test Mode.');
                 }
 
-                const currentUser = auth.currentUser;
-                if (!currentUser) return;
-
-                // RULE 1: Strict Path for User Private Data
-                const stateDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'creator_data', 'main_state');
+                // Dokumen utama di Firestore project "ai-creator-studio-dashboard" Anda:
+                // Koleksi: ai_creator_dashboard -> Dokumen: workspace_main
+                const stateDocRef = doc(db, 'ai_creator_dashboard', WORKSPACE_KEY || 'workspace_main');
 
                 let isSavingLocalChange = false;
 
-                // Global function to save current state whenever user makes any change
                 window.saveStateToCloud = async () => {
-                    if (!auth.currentUser) return;
                     try {
                         isSavingLocalChange = true;
-                        setSyncIndicator('saving', 'Menyimpan...');
+                        setSyncIndicator('saving', 'Menyimpan ke Firebase...');
                         await setDoc(stateDocRef, {
                             ytChannels,
                             claudeAccounts,
@@ -1369,16 +1933,15 @@
                             ideKontenList,
                             updatedAt: Date.now()
                         });
-                        setSyncIndicator('saved', 'Tersimpan Otomatis');
+                        setSyncIndicator('saved', `Tersimpan (${activeFirebaseConfig.projectId})`);
                     } catch (err) {
-                        console.error('Gagal menyimpan:', err);
-                        setSyncIndicator('error', 'Gagal Simpan');
+                        console.error('Gagal menyimpan ke Firestore:', err);
+                        setSyncIndicator('error', 'Cek Rules Firestore (Test Mode)');
                     } finally {
                         setTimeout(() => { isSavingLocalChange = false; }, 300);
                     }
                 };
 
-                // Listen to saved data & auto-load on open
                 onSnapshot(
                     stateDocRef,
                     (snapshot) => {
@@ -1393,22 +1956,29 @@
                                 renderUpKonten();
                                 renderIdeKonten();
                             }
-                            setSyncIndicator('saved', 'Tersimpan Otomatis');
+                            setSyncIndicator('saved', `Tersimpan (${activeFirebaseConfig.projectId})`);
+                            const modalStatus = document.getElementById('fbModalStatusText');
+                            if (modalStatus) modalStatus.textContent = `Terhubung ke ${activeFirebaseConfig.projectId}`;
                         } else {
-                            // First time opening: save initial template to cloud
+                            // Pertama kali terhubung: langsung buat dokumen awal di Firestore Anda
                             window.saveStateToCloud();
                         }
                     },
                     (error) => {
-                        console.error('Error membaca data:', error);
-                        setSyncIndicator('error', 'Offline / Gagal Sinkron');
+                        console.error('Error membaca Firestore:', error);
+                        setSyncIndicator('error', 'Pastikan Rules Firestore = allow read, write: if true;');
                     }
                 );
             } catch (err) {
-                console.error('Inisialisasi penyimpanan gagal:', err);
-                setSyncIndicator('error', 'Penyimpanan Offline');
+                console.error('Inisialisasi Firebase gagal:', err);
+                setSyncIndicator('error', 'Konfigurasi Firebase Error');
             }
         }
+
+        window.reconnectFirebaseCloud = () => {
+            initCloudStorage();
+            showToast(`Menghubungkan ke Firebase (${CUSTOM_FIREBASE_CONFIG.projectId})...`, 'fa-solid fa-fire text-amber-400');
+        };
 
         initCloudStorage();
     </script>
