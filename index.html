@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Creator Tracker - 6 YT & Claude Manager</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        claude: {
+                            DEFAULT: '#d97757',
+                            dark: '#b85c3e',
+                            light: '#f3e4de'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .row-transition {
+            transition: all 0.25s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-orange-500 selection:text-white">
+
+    <!-- Top Navigation / Header -->
+    <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500 via-amber-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <i class="fa-solid fa-robot text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        AI Content Creator Hub
+                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">6 YT Channels</span>
+                    </h1>
+                    <p class="text-xs text-slate-400" id="liveClock">Memuat waktu...</p>
+                </div>
+            </div>
+
+            <!-- Quick Stats & Channel Settings -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/70 px-3 py-1.5 rounded-xl text-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-slate-400">Claude Ready:</span>
+                    <span class="font-bold text-emerald-400" id="statClaudeReady">0/0</span>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/70 px-3 py-1.5 rounded-xl text-xs">
+                    <i class="fa-brands fa-youtube text-red-500"></i>
+                    <span class="text-slate-400">Siap Tayang:</span>
+                    <span class="font-bold text-white" id="statPendingUp">0</span>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/70 px-3 py-1.5 rounded-xl text-xs">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                    <span class="text-slate-400">Ide Aktif:</span>
+                    <span class="font-bold text-white" id="statPendingIdeas">0</span>
+                </div>
+                <button onclick="openChannelModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-orange-400"></i>
+                    <span>Atur 6 Channel YT</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- View Mode Tabs -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/80 bg-slate-900/50">
+            <div class="flex items-center gap-1 overflow-x-auto py-2 no-scrollbar">
+                <button onclick="switchTab('all')" id="tab-all" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition whitespace-nowrap bg-orange-500 text-white shadow-sm">
+                    <i class="fa-solid fa-table-columns mr-1.5"></i> Semua Kategori
+                </button>
+                <button onclick="switchTab('claude')" id="tab-claude" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-clock-rotate-left mr-1.5 text-orange-400"></i> 1. Limit Claude
+                </button>
+                <button onclick="switchTab('up')" id="tab-up" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-cloud-arrow-up mr-1.5 text-red-400"></i> 2. Up Konten
+                </button>
+                <button onclick="switchTab('ide')" id="tab-ide" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i class="fa-solid fa-lightbulb mr-1.5 text-amber-400"></i> 3. Ide Konten
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+        <!-- Top Grid: Limit Claude & Ide Konten side by side in 'all' view -->
+        <div id="topGridContainer" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- ==========================================
+                 KATEGORI 1: LIMIT CLAUDE
+                 ========================================== -->
+            <section id="section-claude" class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-orange-500/10 to-transparent">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/30">1</span>
+                            <h2 class="text-base sm:text-lg font-bold text-white">Limit Claude</h2>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Pantau jam reset limit akun Claude gratisan</p>
+                    </div>
+                    <button onclick="toggleAddClaudeForm()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-orange-500/20">
+                        <i class="fa-solid fa-plus"></i> Tambah Akun
+                    </button>
+                </div>
+
+                <!-- Add Claude Account Collapsible Form -->
+                <div id="addClaudeForm" class="hidden p-4 bg-slate-800/60 border-b border-slate-700/70 space-y-3">
+                    <div class="text-xs font-semibold text-orange-300 flex items-center justify-between">
+                        <span>Tambah Akun Claude Baru</span>
+                        <button onclick="toggleAddClaudeForm()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Nama Akun / Email</label>
+                            <input type="text" id="newClaudeName" placeholder="Misal: Claude 7 (mail@..)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Limit Hingga Kapan (Opsional)</label>
+                            <input type="datetime-local" id="newClaudeLimit" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button onclick="addClaudeAccount()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
+                            Simpan Akun
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Limit Claude (Left: Nama Akun, Right: Limit Hingga Kapan) -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-950/60 text-[11px] uppercase tracking-wider text-slate-400">
+                                <th class="py-3 px-4 font-semibold">Nama Akun</th>
+                                <th class="py-3 px-4 font-semibold text-right">Limit Hingga Kapan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="claudeTableBody" class="divide-y divide-slate-800/70 text-sm">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 KATEGORI 3: IDE KONTEN
+                 ========================================== -->
+            <section id="section-ide" class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-amber-500/10 to-transparent">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">3</span>
+                            <h2 class="text-base sm:text-lg font-bold text-white">Ide Konten (Draft Awal)</h2>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Catat ide mentah & pilih akun Claude untuk eksekusi. Ceklis otomatis turun ke bawah.</p>
+                    </div>
+                </div>
+
+                <!-- Quick Add Ide Konten Bar -->
+                <div class="p-4 bg-slate-800/40 border-b border-slate-800">
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                        <div class="sm:col-span-6">
+                            <input type="text" id="inputIdeText" placeholder="Tulis ide konten AI baru di sini..." class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div class="sm:col-span-4">
+                            <select id="inputIdeClaude" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                                <!-- Populated with Claude Accounts -->
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <button onclick="addIdeKonten()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm px-3 py-2 rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/10">
+                                <i class="fa-solid fa-plus"></i> Tambah
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Ide Konten (Columns: Ide Konten | Akun Claude | Ceklis) -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-950/60 text-[11px] uppercase tracking-wider text-slate-400">
+                                <th class="py-3 px-4 font-semibold">Ide Konten</th>
+                                <th class="py-3 px-4 font-semibold w-44">Akun Claude</th>
+                                <th class="py-3 px-4 font-semibold text-center w-28">Ceklis</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ideTableBody" class="divide-y divide-slate-800/70 text-sm">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ==========================================
+             KATEGORI 2: UP KONTEN (JADWAL TAYANG)
+             ========================================== -->
+        <section id="section-up" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-gradient-to-r from-red-500/10 via-purple-500/5 to-transparent">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-red-500/20 text-red-400 border border-red-500/30">2</span>
+                        <h2 class="text-base sm:text-lg font-bold text-white">Up Konten (Siap Upload & Jadwal Tayang)</h2>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">Diurutkan otomatis dari <strong class="text-slate-200">Jadwal Tayang Terdekat</strong>. Konten yang sudah diceklis otomatis turun ke paling bawah.</p>
+                </div>
+
+                <!-- Filter Channel & Add Content Button -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <div class="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+                        <i class="fa-solid fa-filter text-xs text-slate-400"></i>
+                        <span class="text-xs text-slate-400">Filter Channel:</span>
+                        <select id="filterUpChannel" onchange="renderUpKonten()" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
+                            <option value="ALL" class="bg-slate-900">Semua Channel (6 YT)</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <button onclick="toggleAddUpForm()" class="bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl transition flex items-center gap-2 shadow-lg shadow-red-600/20">
+                        <i class="fa-solid fa-plus"></i> Tambah Jadwal Konten
+                    </button>
+                </div>
+            </div>
+
+            <!-- Channel Quick Filter Pills -->
+            <div id="channelFilterPills" class="px-4 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- Collapsible Form Add Up Konten -->
+            <div id="addUpForm" class="hidden p-4 sm:p-5 bg-slate-800/50 border-b border-slate-700/80 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs sm:text-sm font-bold text-red-400 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-plus"></i> Input Konten Siap Up Baru
+                    </h3>
+                    <button onclick="toggleAddUpForm()" class="text-slate-400 hover:text-white text-sm">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                    <div class="md:col-span-3">
+                        <label class="block text-xs text-slate-300 mb-1 font-medium">Pilih Channel YT</label>
+                        <select id="newUpChannel" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-red-500">
+                            <!-- Populated with 6 YT channels -->
+                        </select>
+                    </div>
+                    <div class="md:col-span-5">
+                        <label class="block text-xs text-slate-300 mb-1 font-medium">Judul Konten</label>
+                        <input type="text" id="newUpTitle" placeholder="Contoh: Kisah AI Menguasai Dunia Tahun 2050 #shorts" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-red-500">
+                    </div>
+                    <div class="md:col-span-4">
+                        <label class="block text-xs text-slate-300 mb-1 font-medium">Jadwal Tayang</label>
+                        <input type="datetime-local" id="newUpSchedule" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-red-500">
+                    </div>
+                    <div class="md:col-span-10">
+                        <label class="block text-xs text-slate-300 mb-1 font-medium">Deskripsi / Caption / Hashtag</label>
+                        <textarea id="newUpDesc" rows="2" placeholder="Tulis deskripsi video, prompt catatan, atau hashtag YouTube..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-red-500"></textarea>
+                    </div>
+                    <div class="md:col-span-2 flex items-end">
+                        <button onclick="addUpKonten()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20">
+                            <i class="fa-solid fa-check"></i> Simpan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Up Konten (Columns from Left: Channel | Judul Konten | Deskripsi | Jadwal Tayang | Ceklis) -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-800 bg-slate-950/60 text-[11px] uppercase tracking-wider text-slate-400">
+                            <th class="py-3.5 px-4 font-semibold w-44">Channel</th>
+                            <th class="py-3.5 px-4 font-semibold min-w-[200px]">Judul Konten</th>
+                            <th class="py-3.5 px-4 font-semibold min-w-[240px]">Deskripsi</th>
+                            <th class="py-3.5 px-4 font-semibold w-52">
+                                <div class="flex items-center gap-1.5">
+                                    <span>Jadwal Tayang</span>
+                                    <i class="fa-solid fa-arrow-down-short-wide text-orange-400" title="Diurutkan dari tanggal terdekat"></i>
+                                </div>
+                            </th>
+                            <th class="py-3.5 px-4 font-semibold text-center w-28">Ceklis</th>
+                        </tr>
+                    </thead>
+                    <tbody id="upTableBody" class="divide-y divide-slate-800/70 text-sm">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==========================================
+         MODAL: ATUR 6 CHANNEL YOUTUBE
+         ========================================== -->
+    <div id="channelModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-brands fa-youtube text-red-500 text-xl"></i>
+                    <h3 class="text-base sm:text-lg font-bold text-white">Kustomisasi 6 Akun YouTube Anda</h3>
+                </div>
+                <button onclick="closeChannelModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400">Ubah nama ke-6 channel YouTube Anda agar sesuai dengan niche AI yang sedang Anda jalankan.</p>
+            <div id="channelInputsList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                <!-- Populated dynamically -->
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button onclick="closeChannelModal()" class="px-4 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300">Batal</button>
+                <button onclick="saveChannelNames()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL: CUSTOM SET LIMIT CLAUDE TIME
+         ========================================== -->
+    <div id="limitModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-orange-400"></i>
+                    <span>Atur Batas Waktu Limit</span>
+                </h3>
+                <button onclick="closeLimitModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p id="limitModalAccountName" class="text-xs text-orange-300 font-medium"></p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Pilih Jam Selesai Limit (Hari Ini / Besok)</label>
+                    <input type="datetime-local" id="customLimitInput" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-1">
+                    <button onclick="applyQuickLimitFromModal(3)" class="bg-slate-800 hover:bg-slate-700 text-xs py-1.5 rounded-lg text-slate-200 border border-slate-700">+3 Jam</button>
+                    <button onclick="applyQuickLimitFromModal(4)" class="bg-slate-800 hover:bg-slate-700 text-xs py-1.5 rounded-lg text-slate-200 border border-slate-700">+4 Jam</button>
+                    <button onclick="applyQuickLimitFromModal(5)" class="bg-slate-800 hover:bg-slate-700 text-xs py-1.5 rounded-lg text-orange-300 border border-orange-500/30 font-semibold">+5 Jam (Default)</button>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button onclick="closeLimitModal()" class="px-3 py-1.5 rounded-xl text-xs bg-slate-800 text-slate-300">Batal</button>
+                <button onclick="saveCustomLimitModal()" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white">Simpan Limit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden transform transition-all duration-300 bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-xs sm:text-sm">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toastMsg">Berhasil disimpan!</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-slate-900 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <span>AI Content Creator Dashboard • Didesain untuk Manajemen 6 Channel YouTube & Akun Claude Gratis</span>
+        <span class="text-slate-600">Tip: Klik tombol <strong>+5j</strong> saat akun Claude terkena limit 5 jam</span>
+    </footer>
+
+    <!-- Application Script -->
+    <script>
+        // ====================================================
+        // 1. INITIAL STATE DATA (6 YT Channels, Claude, Up, Ide)
+        // ====================================================
+        const now = new Date();
+        const addHours = (h) => {
+            const d = new Date(now.getTime() + h * 60 * 60 * 1000);
+            return toLocalISOString(d);
+        };
+
+        function toLocalISOString(date) {
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        // 6 YouTube Channels with distinct badge styles
+        let ytChannels = [
+            { id: 'yt1', name: 'YT 1 - AI Cerita Sejarah', color: 'bg-red-500/15 text-red-400 border-red-500/30' },
+            { id: 'yt2', name: 'YT 2 - Fakta Semesta AI', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+            { id: 'yt3', name: 'YT 3 - Kucing AI Lucu', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+            { id: 'yt4', name: 'YT 4 - Misteri & Horor AI', color: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
+            { id: 'yt5', name: 'YT 5 - Motivasi Stoik AI', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+            { id: 'yt6', name: 'YT 6 - Tech & Masa Depan', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' }
+        ];
+
+        // 1. Limit Claude Accounts Data
+        let claudeAccounts = [
+            { id: 'c1', name: 'Claude 1 (creator.ai01@gmail)', limitUntil: addHours(2.5) },
+            { id: 'c2', name: 'Claude 2 (creator.ai02@gmail)', limitUntil: addHours(4.2) },
+            { id: 'c3', name: 'Claude 3 (studio.yt03@gmail)', limitUntil: '' }, // Ready
+            { id: 'c4', name: 'Claude 4 (studio.yt04@gmail)', limitUntil: '' }, // Ready
+            { id: 'c5', name: 'Claude 5 (aishorts.05@gmail)', limitUntil: addHours(1.1) },
+            { id: 'c6', name: 'Claude 6 (cadangan.06@gmail)', limitUntil: '' }  // Ready
+        ];
+
+        // 2. Up Konten Data
+        let upKontenList = [
+            {
+                id: 'up1',
+                channelId: 'yt3',
+                judul: 'Kucing Oren Jadi Astronot di Mars #shorts',
+                deskripsi: 'Petualangan kucing oren memakai baju astronot buatan AI. Jangan lupa subscribe! #kucinglucu #aishorts #catlover',
+                jadwal: addHours(3),
+                checked: false
+            },
+            {
+                id: 'up2',
+                channelId: 'yt1',
+                judul: 'Bagaimana Jika Majapahit Punya Teknologi AI?',
+                deskripsi: 'Visualisasi alternatif kerajaan Nusantara menggunakan teknologi masa depan. #sejarah #nusantara #aiart',
+                jadwal: addHours(1.5),
+                checked: false
+            },
+            {
+                id: 'up3',
+                channelId: 'yt4',
+                judul: 'Rekaman CCTV Hutan Larangan Jam 3 Pagi',
+                deskripsi: 'Cerita fiksi misteri hasil generasi AI paling menegangkan minggu ini. #horor #misteri #ceritaseram',
+                jadwal: addHours(8),
+                checked: false
+            },
+            {
+                id: 'up4',
+                channelId: 'yt2',
+                judul: 'Suara Asli Planet Saturnus Saat Direkam NASA',
+                deskripsi: 'Penjelasan singkat gelombang elektromagnetik planet di tata surya kita. #sains #semesta #faktaunik',
+                jadwal: addHours(20),
+                checked: false
+            },
+            {
+                id: 'up5',
+                channelId: 'yt5',
+                judul: 'Cara Berhenti Overthinking Menurut Marcus Aurelius',
+                deskripsi: 'Filosofi Stoikisme untuk ketenangan pikiran di era modern. #stoikisme #motivasi #mindset',
+                jadwal: addHours(-5),
+                checked: true // Already uploaded, so it stays at the bottom
+            }
+        ];
+
+        // 3. Ide Konten Data
+        let ideKontenList = [
+            {
+                id: 'ide1',
+                ide: 'Bikin prompt cerita pendek Kucing Oren buka warung pecel lele',
+                claudeAccount: 'Claude 3 (studio.yt03@gmail)',
+                checked: false
+            },
+            {
+                id: 'ide2',
+                ide: 'Riset 5 fakta palung Mariana yang belum banyak orang tahu',
+                claudeAccount: 'Claude 4 (studio.yt04@gmail)',
+                checked: false
+            },
+            {
+                id: 'ide3',
+                ide: 'Script 60 detik kerajaan Atlantis versi cyberpunk',
+                claudeAccount: 'Claude 6 (cadangan.06@gmail)',
+                checked: false
+            },
+            {
+                id: 'ide4',
+                ide: 'Naskah monolog Marcus Aurelius tentang disiplin pagi hari',
+                claudeAccount: 'Claude 1 (creator.ai01@gmail)',
+                checked: true // Checked -> moves to bottom
+            }
+        ];
+
+        let activeLimitModalAccountId = null;
+
+        // ====================================================
+        // 2. HELPER & FORMATTING FUNCTIONS
+        // ====================================================
+        function showToast(msg, iconClass = 'fa-solid fa-circle-check text-emerald-400') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+            toastMsg.textContent = msg;
+            toastIcon.className = `${iconClass} text-base`;
+            toast.classList.remove('hidden');
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#039;');
+        }
+
+        function isLimitActive(limitUntilStr) {
+            if (!limitUntilStr) return false;
+            const target = new Date(limitUntilStr).getTime();
+            return target > Date.now();
+        }
+
+        function getRemainingTimeText(limitUntilStr) {
+            if (!limitUntilStr) return null;
+            const diff = new Date(limitUntilStr).getTime() - Date.now();
+            if (diff <= 0) return null;
+            const totalMinutes = Math.ceil(diff / (1000 * 60));
+            const hours = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            if (hours > 0) {
+                return `Sisa ${hours}j ${mins}m`;
+            }
+            return `Sisa ${mins} menit`;
+        }
+
+        function formatDateTimeIndo(isoStr) {
+            if (!isoStr) return '-';
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) return '-';
+            const hari = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'][d.getDay()];
+            const bln = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][d.getMonth()];
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${hari}, ${d.getDate()} ${bln} • ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        function getRelativeScheduleBadge(isoStr, isChecked) {
+            if (isChecked) {
+                return `<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Sudah Up</span>`;
+            }
+            if (!isoStr) return '';
+            const diff = new Date(isoStr).getTime() - Date.now();
+            const hours = diff / (1000 * 60 * 60);
+            if (diff < 0) {
+                return `<span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">Jadwal Lewat</span>`;
+            } else if (hours <= 3) {
+                return `<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">Segera Tayang</span>`;
+            } else if (hours <= 24) {
+                return `<span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">Hari Ini / Besok</span>`;
+            }
+            return `<span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Terjadwal</span>`;
+        }
+
+        // ====================================================
+        // 3. RENDER KATEGORI 1: LIMIT CLAUDE
+        // ====================================================
+        function renderClaudeTable() {
+            const tbody = document.getElementById('claudeTableBody');
+            tbody.innerHTML = '';
+
+            let readyCount = 0;
+
+            claudeAccounts.forEach((acc) => {
+                const active = isLimitActive(acc.limitUntil);
+                if (!active) readyCount++;
+                const remaining = getRemainingTimeText(acc.limitUntil);
+
+                const tr = document.createElement('tr');
+                tr.className = `row-transition hover:bg-slate-800/40 ${active ? 'bg-orange-950/10' : ''}`;
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 align-middle">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${active ? 'bg-orange-500' : 'bg-emerald-400 shadow-sm shadow-emerald-400'}"></span>
+                            <div>
+                                <div class="font-medium text-slate-100 text-xs sm:text-sm">${escapeHtml(acc.name)}</div>
+                                <div class="text-[11px] ${active ? 'text-orange-400' : 'text-emerald-400'} font-medium">
+                                    ${active ? `Limit Aktif (${remaining})` : 'Ready • Bisa Dipakai'}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4 align-middle text-right">
+                        <div class="flex flex-col items-end gap-1.5">
+                            ${active ? `
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-300 text-xs font-semibold">
+                                    <i class="fa-regular fa-clock"></i>
+                                    ${formatDateTimeIndo(acc.limitUntil)}
+                                </span>
+                            ` : `
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium">
+                                    <i class="fa-solid fa-check"></i> Aman / Tanpa Limit
+                                </span>
+                            `}
+                            <div class="flex items-center justify-end gap-1">
+                                <button onclick="setClaudeQuickHours('${acc.id}', 5)" title="Set Limit +5 Jam dari sekarang" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-orange-500/20 hover:text-orange-300 border border-slate-700 text-[11px] text-slate-300 transition">
+                                    +5j
+                                </button>
+                                <button onclick="openLimitModal('${acc.id}')" title="Atur jam spesifik" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 transition">
+                                    <i class="fa-regular fa-calendar"></i> Set Jam
+                                </button>
+                                ${active ? `
+                                    <button onclick="clearClaudeLimit('${acc.id}')" title="Reset jadi Ready" class="px-2 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/30 text-[11px] text-emerald-300 transition">
+                                        Reset
+                                    </button>
+                                ` : ''}
+                                <button onclick="deleteClaudeAccount('${acc.id}')" title="Hapus akun" class="p-1 text-slate-500 hover:text-rose-400 transition ml-1">
+                                    <i class="fa-regular fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('statClaudeReady').textContent = `${readyCount}/${claudeAccounts.length}`;
+            populateIdeClaudeSelect();
+        }
+
+        function setClaudeQuickHours(id, hours) {
+            const acc = claudeAccounts.find(a => a.id === id);
+            if (!acc) return;
+            const d = new Date(Date.now() + hours * 60 * 60 * 1000);
+            acc.limitUntil = toLocalISOString(d);
+            renderClaudeTable();
+            renderIdeKonten();
+            showToast(`${acc.name} diset limit hingga ${hours} jam ke depan`, 'fa-regular fa-clock text-orange-400');
+        }
+
+        function clearClaudeLimit(id) {
+            const acc = claudeAccounts.find(a => a.id === id);
+            if (!acc) return;
+            acc.limitUntil = '';
+            renderClaudeTable();
+            renderIdeKonten();
+            showToast(`${acc.name} sudah Ready kembali!`);
+        }
+
+        function toggleAddClaudeForm() {
+            const form = document.getElementById('addClaudeForm');
+            form.classList.toggle('hidden');
+        }
+
+        function addClaudeAccount() {
+            const nameInput = document.getElementById('newClaudeName');
+            const limitInput = document.getElementById('newClaudeLimit');
+            const name = nameInput.value.trim();
+            if (!name) {
+                showToast('Masukkan nama akun Claude terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+            claudeAccounts.push({
+                id: 'c_' + Date.now(),
+                name,
+                limitUntil: limitInput.value || ''
+            });
+            nameInput.value = '';
+            limitInput.value = '';
+            document.getElementById('addClaudeForm').classList.add('hidden');
+            renderClaudeTable();
+            showToast('Akun Claude baru berhasil ditambahkan!');
+        }
+
+        function deleteClaudeAccount(id) {
+            claudeAccounts = claudeAccounts.filter(a => a.id !== id);
+            renderClaudeTable();
+            showToast('Akun Claude dihapus', 'fa-regular fa-trash-can text-slate-400');
+        }
+
+        function openLimitModal(id) {
+            activeLimitModalAccountId = id;
+            const acc = claudeAccounts.find(a => a.id === id);
+            if (!acc) return;
+            document.getElementById('limitModalAccountName').textContent = `Akun: ${acc.name}`;
+            document.getElementById('customLimitInput').value = acc.limitUntil || toLocalISOString(new Date(Date.now() + 5 * 3600 * 1000));
+            document.getElementById('limitModal').classList.remove('hidden');
+        }
+
+        function closeLimitModal() {
+            activeLimitModalAccountId = null;
+            document.getElementById('limitModal').classList.add('hidden');
+        }
+
+        function applyQuickLimitFromModal(hours) {
+            const d = new Date(Date.now() + hours * 3600 * 1000);
+            document.getElementById('customLimitInput').value = toLocalISOString(d);
+        }
+
+        function saveCustomLimitModal() {
+            if (!activeLimitModalAccountId) return;
+            const acc = claudeAccounts.find(a => a.id === activeLimitModalAccountId);
+            if (acc) {
+                acc.limitUntil = document.getElementById('customLimitInput').value;
+                renderClaudeTable();
+                renderIdeKonten();
+                showToast(`Batas limit ${acc.name} diperbarui!`);
+            }
+            closeLimitModal();
+        }
+
+        // ====================================================
+        // 4. RENDER KATEGORI 2: UP KONTEN (JADWAL TAYANG)
+        // ====================================================
+        function renderChannelSelectors() {
+            const filterSelect = document.getElementById('filterUpChannel');
+            const currentFilter = filterSelect.value || 'ALL';
+            filterSelect.innerHTML = `<option value="ALL" class="bg-slate-900">Semua Channel (6 YT)</option>`;
+
+            const newUpChannel = document.getElementById('newUpChannel');
+            newUpChannel.innerHTML = '';
+
+            const pillsContainer = document.getElementById('channelFilterPills');
+            pillsContainer.innerHTML = '';
+
+            // 'All' Pill
+            const allPill = document.createElement('button');
+            allPill.onclick = () => { filterSelect.value = 'ALL'; renderUpKonten(); };
+            allPill.className = `px-3 py-1 rounded-full text-xs font-medium transition whitespace-nowrap ${currentFilter === 'ALL' ? 'bg-red-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'}`;
+            allPill.textContent = `Semua (${upKontenList.length})`;
+            pillsContainer.appendChild(allPill);
+
+            ytChannels.forEach(ch => {
+                // Dropdown option
+                const opt1 = document.createElement('option');
+                opt1.value = ch.id;
+                opt1.className = 'bg-slate-900';
+                opt1.textContent = ch.name;
+                filterSelect.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = ch.id;
+                opt2.className = 'bg-slate-900';
+                opt2.textContent = ch.name;
+                newUpChannel.appendChild(opt2);
+
+                // Count items for this channel
+                const count = upKontenList.filter(item => item.channelId === ch.id && !item.checked).length;
+
+                // Filter pill
+                const pill = document.createElement('button');
+                pill.onclick = () => { filterSelect.value = ch.id; renderUpKonten(); };
+                pill.className = `px-3 py-1 rounded-full text-xs font-medium transition whitespace-nowrap flex items-center gap-1.5 ${currentFilter === ch.id ? 'bg-red-600 text-white shadow' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'}`;
+                pill.innerHTML = `<span>${escapeHtml(ch.name)}</span> <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300">${count}</span>`;
+                pillsContainer.appendChild(pill);
+            });
+
+            filterSelect.value = currentFilter;
+        }
+
+        function renderUpKonten() {
+            renderChannelSelectors();
+            const filterChannelId = document.getElementById('filterUpChannel').value;
+            const tbody = document.getElementById('upTableBody');
+            tbody.innerHTML = '';
+
+            // Filter by selected YT channel
+            let filtered = upKontenList.filter(item => {
+                if (filterChannelId === 'ALL') return true;
+                return item.channelId === filterChannelId;
+            });
+
+            // SORTING RULE:
+            // 1. Checked items ALWAYS go to the bottom (a.checked !== b.checked)
+            // 2. Unchecked items are sorted by nearest jadwal tayang ascending
+            filtered.sort((a, b) => {
+                if (a.checked !== b.checked) {
+                    return a.checked ? 1 : -1;
+                }
+                const timeA = a.jadwal ? new Date(a.jadwal).getTime() : Number.MAX_SAFE_INTEGER;
+                const timeB = b.jadwal ? new Date(b.jadwal).getTime() : Number.MAX_SAFE_INTEGER;
+                return timeA - timeB;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-500 text-xs sm:text-sm">
+                            Belum ada jadwal konten untuk filter channel ini. Klik <strong>Tambah Jadwal Konten</strong> di kanan atas.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                filtered.forEach(item => {
+                    const ch = ytChannels.find(c => c.id === item.channelId) || ytChannels[0];
+                    const tr = document.createElement('tr');
+                    tr.className = `row-transition hover:bg-slate-800/40 ${item.checked ? 'bg-slate-950/60 opacity-60' : ''}`;
+
+                    // Build inline channel options so user can also change channel directly in the row
+                    const channelOptionsHtml = ytChannels.map(c =>
+                        `<option value="${c.id}" class="bg-slate-900 text-white" ${c.id === item.channelId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+                    ).join('');
+
+                    tr.innerHTML = `
+                        <!-- Kolom 1: Channel -->
+                        <td class="py-3.5 px-4 align-top">
+                            <div class="inline-block w-full">
+                                <select onchange="changeUpItemChannel('${item.id}', this.value)" class="w-full text-xs font-semibold px-2.5 py-1.5 rounded-xl border ${ch.color} focus:outline-none cursor-pointer">
+                                    ${channelOptionsHtml}
+                                </select>
+                            </div>
+                        </td>
+
+                        <!-- Kolom 2: Judul Konten -->
+                        <td class="py-3.5 px-4 align-top">
+                            <div class="font-semibold text-xs sm:text-sm ${item.checked ? 'line-through text-slate-500' : 'text-white'}">
+                                ${escapeHtml(item.judul)}
+                            </div>
+                        </td>
+
+                        <!-- Kolom 3: Deskripsi -->
+                        <td class="py-3.5 px-4 align-top">
+                            <div class="flex items-start justify-between gap-2 bg-slate-950/50 border border-slate-800/80 rounded-xl p-2.5">
+                                <p class="text-xs ${item.checked ? 'line-through text-slate-500' : 'text-slate-300'} leading-relaxed break-words">
+                                    ${escapeHtml(item.deskripsi || '-')}
+                                </p>
+                                <button onclick="copyDeskripsi('${item.id}')" title="Salin Deskripsi" class="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 flex-shrink-0 transition">
+                                    <i class="fa-regular fa-copy text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+
+                        <!-- Kolom 4: Jadwal Tayang -->
+                        <td class="py-3.5 px-4 align-top">
+                            <div class="flex flex-col gap-1">
+                                <div class="text-xs font-semibold ${item.checked ? 'line-through text-slate-500' : 'text-orange-300'} flex items-center gap-1.5">
+                                    <i class="fa-regular fa-calendar-check"></i>
+                                    <span>${formatDateTimeIndo(item.jadwal)}</span>
+                                </div>
+                                <div>${getRelativeScheduleBadge(item.jadwal, item.checked)}</div>
+                            </div>
+                        </td>
+
+                        <!-- Kolom 5: Ceklis -->
+                        <td class="py-3.5 px-4 align-middle text-center">
+                            <div class="flex items-center justify-center gap-3">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleUpKontenCheck('${item.id}')" class="sr-only peer">
+                                    <div class="w-6 h-6 rounded-lg border-2 border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500 flex items-center justify-center transition">
+                                        <i class="fa-solid fa-check text-white text-xs ${item.checked ? 'opacity-100' : 'opacity-0'}"></i>
+                                    </div>
+                                </label>
+                                <button onclick="deleteUpKonten('${item.id}')" title="Hapus jadwal" class="text-slate-500 hover:text-rose-400 transition">
+                                    <i class="fa-regular fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            const pendingCount = upKontenList.filter(i => !i.checked).length;
+            document.getElementById('statPendingUp').textContent = pendingCount;
+        }
+
+        function toggleAddUpForm() {
+            const form = document.getElementById('addUpForm');
+            form.classList.toggle('hidden');
+            if (!form.classList.contains('hidden')) {
+                const schedInput = document.getElementById('newUpSchedule');
+                if (!schedInput.value) {
+                    schedInput.value = toLocalISOString(new Date(Date.now() + 2 * 3600 * 1000));
+                }
+            }
+        }
+
+        function addUpKonten() {
+            const channelId = document.getElementById('newUpChannel').value;
+            const judul = document.getElementById('newUpTitle').value.trim();
+            const deskripsi = document.getElementById('newUpDesc').value.trim();
+            const jadwal = document.getElementById('newUpSchedule').value;
+
+            if (!judul) {
+                showToast('Judul konten wajib diisi!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+            if (!jadwal) {
+                showToast('Pilih jadwal tayang terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+
+            upKontenList.push({
+                id: 'up_' + Date.now(),
+                channelId,
+                judul,
+                deskripsi,
+                jadwal,
+                checked: false
+            });
+
+            document.getElementById('newUpTitle').value = '';
+            document.getElementById('newUpDesc').value = '';
+            document.getElementById('addUpForm').classList.add('hidden');
+            renderUpKonten();
+            showToast('Konten masuk ke antrean jadwal tayang terdekat!');
+        }
+
+        function toggleUpKontenCheck(id) {
+            const item = upKontenList.find(i => i.id === id);
+            if (!item) return;
+            item.checked = !item.checked;
+            renderUpKonten();
+            if (item.checked) {
+                showToast('Konten selesai di-up & dipindahkan ke urutan paling bawah!');
+            }
+        }
+
+        function changeUpItemChannel(id, newChannelId) {
+            const item = upKontenList.find(i => i.id === id);
+            if (!item) return;
+            item.channelId = newChannelId;
+            renderUpKonten();
+            const ch = ytChannels.find(c => c.id === newChannelId);
+            showToast(`Channel diubah ke ${ch ? ch.name : ''}`);
+        }
+
+        function copyDeskripsi(id) {
+            const item = upKontenList.find(i => i.id === id);
+            if (!item) return;
+            const textToCopy = `${item.judul}\n\n${item.deskripsi}`;
+            const tempInput = document.createElement('textarea');
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('Judul & Deskripsi berhasil disalin ke clipboard!');
+        }
+
+        function deleteUpKonten(id) {
+            upKontenList = upKontenList.filter(i => i.id !== id);
+            renderUpKonten();
+            showToast('Konten dihapus dari daftar Up Konten', 'fa-regular fa-trash-can text-slate-400');
+        }
+
+        // ====================================================
+        // 5. RENDER KATEGORI 3: IDE KONTEN
+        // ====================================================
+        function populateIdeClaudeSelect() {
+            const select = document.getElementById('inputIdeClaude');
+            if (!select) return;
+            const prevVal = select.value;
+            select.innerHTML = '';
+
+            claudeAccounts.forEach(acc => {
+                const active = isLimitActive(acc.limitUntil);
+                const opt = document.createElement('option');
+                opt.value = acc.name;
+                opt.textContent = `${acc.name} ${active ? '(Limit)' : '(Ready)'}`;
+                select.appendChild(opt);
+            });
+
+            if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
+                select.value = prevVal;
+            }
+        }
+
+        function renderIdeKonten() {
+            const tbody = document.getElementById('ideTableBody');
+            tbody.innerHTML = '';
+
+            // Sort rule: unchecked on top, checked sinks to bottom
+            const sorted = [...ideKontenList].sort((a, b) => {
+                if (a.checked !== b.checked) {
+                    return a.checked ? 1 : -1;
+                }
+                return 0;
+            });
+
+            if (sorted.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="py-8 text-center text-slate-500 text-xs sm:text-sm">
+                            Belum ada ide konten. Tambahkan ide di kolom atas!
+                        </td>
+                    </tr>
+                `;
+            } else {
+                sorted.forEach(item => {
+                    // Check if linked Claude account is currently ready or limited
+                    const matchedAcc = claudeAccounts.find(a => a.name === item.claudeAccount);
+                    const isLimited = matchedAcc ? isLimitActive(matchedAcc.limitUntil) : false;
+
+                    const tr = document.createElement('tr');
+                    tr.className = `row-transition hover:bg-slate-800/40 ${item.checked ? 'bg-slate-950/60 opacity-55' : ''}`;
+
+                    tr.innerHTML = `
+                        <!-- Kolom 1: Ide Konten -->
+                        <td class="py-3.5 px-4 align-middle">
+                            <div class="text-xs sm:text-sm font-medium ${item.checked ? 'line-through text-slate-500' : 'text-slate-100'}">
+                                ${escapeHtml(item.ide)}
+                            </div>
+                        </td>
+
+                        <!-- Kolom 2: Akun Claude -->
+                        <td class="py-3.5 px-4 align-middle">
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border ${
+                                isLimited
+                                    ? 'bg-orange-500/10 text-orange-300 border-orange-500/30'
+                                    : 'bg-slate-800 text-slate-200 border-slate-700'
+                            }">
+                                <span class="w-2 h-2 rounded-full ${isLimited ? 'bg-orange-400' : 'bg-emerald-400'}"></span>
+                                <span class="truncate max-w-[140px]">${escapeHtml(item.claudeAccount)}</span>
+                            </div>
+                        </td>
+
+                        <!-- Kolom 3: Ceklis (+ Tombol Naik ke Up Konten) -->
+                        <td class="py-3.5 px-4 align-middle text-center">
+                            <div class="flex items-center justify-center gap-2.5">
+                                <label class="inline-flex items-center cursor-pointer" title="Ceklis jika sudah selesai (otomatis turun ke bawah)">
+                                    <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleIdeCheck('${item.id}')" class="sr-only peer">
+                                    <div class="w-6 h-6 rounded-lg border-2 border-slate-600 peer-checked:border-amber-500 peer-checked:bg-amber-500 flex items-center justify-center transition">
+                                        <i class="fa-solid fa-check text-slate-950 text-xs font-bold ${item.checked ? 'opacity-100' : 'opacity-0'}"></i>
+                                    </div>
+                                </label>
+                                <button onclick="promoteIdeToUp('${item.id}')" title="Kirim ide ini ke Jadwal Up Konten" class="p-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-slate-700 transition">
+                                    <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                                </button>
+                                <button onclick="deleteIdeKonten('${item.id}')" title="Hapus ide" class="text-slate-500 hover:text-rose-400 transition">
+                                    <i class="fa-regular fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            const pendingIdeas = ideKontenList.filter(i => !i.checked).length;
+            document.getElementById('statPendingIdeas').textContent = pendingIdeas;
+        }
+
+        function addIdeKonten() {
+            const ideInput = document.getElementById('inputIdeText');
+            const claudeSelect = document.getElementById('inputIdeClaude');
+            const ide = ideInput.value.trim();
+
+            if (!ide) {
+                showToast('Tulis ide konten terlebih dahulu!', 'fa-solid fa-triangle-exclamation text-amber-400');
+                return;
+            }
+
+            ideKontenList.unshift({
+                id: 'ide_' + Date.now(),
+                ide,
+                claudeAccount: claudeSelect.value || 'Claude 1',
+                checked: false
+            });
+
+            ideInput.value = '';
+            renderIdeKonten();
+            showToast('Ide konten berhasil ditambahkan!');
+        }
+
+        function toggleIdeCheck(id) {
+            const item = ideKontenList.find(i => i.id === id);
+            if (!item) return;
+            item.checked = !item.checked;
+            renderIdeKonten();
+            if (item.checked) {
+                showToast('Ide selesai dieksekusi & turun ke urutan bawah!');
+            }
+        }
+
+        function promoteIdeToUp(id) {
+            const item = ideKontenList.find(i => i.id === id);
+            if (!item) return;
+
+            // Mark idea as checked & open Up Konten form pre-filled with this idea
+            item.checked = true;
+            renderIdeKonten();
+
+            const form = document.getElementById('addUpForm');
+            form.classList.remove('hidden');
+            document.getElementById('newUpTitle').value = item.ide;
+            document.getElementById('newUpDesc').value = `Dieksekusi dengan ${item.claudeAccount} #ai #shorts`;
+            document.getElementById('newUpSchedule').value = toLocalISOString(new Date(Date.now() + 3 * 3600 * 1000));
+
+            document.getElementById('section-up').scrollIntoView({ behavior: 'smooth' });
+            showToast('Ide dikirim ke form Up Konten! Silakan pilih Channel & Jadwal Tayang.');
+        }
+
+        function deleteIdeKonten(id) {
+            ideKontenList = ideKontenList.filter(i => i.id !== id);
+            renderIdeKonten();
+            showToast('Ide konten dihapus', 'fa-regular fa-trash-can text-slate-400');
+        }
+
+        // ====================================================
+        // 6. MANAGE 6 YOUTUBE CHANNELS MODAL
+        // ====================================================
+        function openChannelModal() {
+            const container = document.getElementById('channelInputsList');
+            container.innerHTML = '';
+            ytChannels.forEach((ch, idx) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-3';
+                div.innerHTML = `
+                    <span class="w-20 text-xs font-bold px-2.5 py-1.5 rounded-xl border text-center ${ch.color}">Channel ${idx + 1}</span>
+                    <input type="text" data-channel-id="${ch.id}" value="${escapeHtml(ch.name)}" class="channel-name-input flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500">
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('channelModal').classList.remove('hidden');
+        }
+
+        function closeChannelModal() {
+            document.getElementById('channelModal').classList.add('hidden');
+        }
+
+        function saveChannelNames() {
+            const inputs = document.querySelectorAll('.channel-name-input');
+            inputs.forEach(input => {
+                const id = input.getAttribute('data-channel-id');
+                const ch = ytChannels.find(c => c.id === id);
+                if (ch && input.value.trim()) {
+                    ch.name = input.value.trim();
+                }
+            });
+            closeChannelModal();
+            renderUpKonten();
+            showToast('Nama ke-6 Channel YouTube berhasil diperbarui!');
+        }
+
+        // ====================================================
+        // 7. TAB NAVIGATION & LIVE CLOCK
+        // ====================================================
+        function switchTab(tab) {
+            const secClaude = document.getElementById('section-claude');
+            const secIde = document.getElementById('section-ide');
+            const secUp = document.getElementById('section-up');
+            const topGrid = document.getElementById('topGridContainer');
+
+            // Reset tab buttons style
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition whitespace-nowrap text-slate-400 hover:text-white hover:bg-slate-800';
+            });
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            if (activeBtn) {
+                activeBtn.className = 'tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition whitespace-nowrap bg-orange-500 text-white shadow-sm';
+            }
+
+            if (tab === 'all') {
+                topGrid.classList.remove('hidden');
+                secClaude.classList.remove('hidden', 'lg:col-span-12');
+                secClaude.classList.add('lg:col-span-5');
+                secIde.classList.remove('hidden', 'lg:col-span-12');
+                secIde.classList.add('lg:col-span-7');
+                secUp.classList.remove('hidden');
+            } else if (tab === 'claude') {
+                topGrid.classList.remove('hidden');
+                secClaude.classList.remove('hidden', 'lg:col-span-5');
+                secClaude.classList.add('lg:col-span-12');
+                secIde.classList.add('hidden');
+                secUp.classList.add('hidden');
+            } else if (tab === 'up') {
+                topGrid.classList.add('hidden');
+                secUp.classList.remove('hidden');
+            } else if (tab === 'ide') {
+                topGrid.classList.remove('hidden');
+                secClaude.classList.add('hidden');
+                secIde.classList.remove('hidden', 'lg:col-span-7');
+                secIde.classList.add('lg:col-span-12');
+                secUp.classList.add('hidden');
+            }
+        }
+
+        function updateLiveClock() {
+            const d = new Date();
+            const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][d.getDay()];
+            const bln = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][d.getMonth()];
+            const pad = (n) => String(n).padStart(2, '0');
+            document.getElementById('liveClock').textContent = `${hari}, ${d.getDate()} ${bln} ${d.getFullYear()} • ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} WIB`;
+        }
+
+        // Allow Enter key on Ide Konten input
+        document.getElementById('inputIdeText').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') addIdeKonten();
+        });
+
+        // Initial Render & Live Refresh Timer
+        window.onload = function () {
+            updateLiveClock();
+            renderClaudeTable();
+            renderUpKonten();
+            renderIdeKonten();
+
+            setInterval(() => {
+                updateLiveClock();
+            }, 1000);
+
+            // Refresh countdowns every 30 seconds
+            setInterval(() => {
+                renderClaudeTable();
+                renderUpKonten();
+            }, 30000);
+        };
+    </script>
+</body>
+</html>
