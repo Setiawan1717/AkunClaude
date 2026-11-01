@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="id" class="dark">
 <head>
@@ -216,18 +217,23 @@
                             <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">3</span>
                             <h2 class="text-base sm:text-lg font-bold text-white">Ide Konten (Draft Awal)</h2>
                         </div>
-                        <p class="text-xs text-slate-400 mt-0.5">Catat ide mentah & pilih akun Claude untuk eksekusi. Ceklis otomatis turun ke bawah.</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Catat ide mentah, pilih Channel YT & akun Claude untuk eksekusi. Ceklis otomatis turun ke bawah.</p>
                     </div>
                 </div>
 
                 <!-- Quick Add Ide Konten Bar -->
                 <div class="p-4 bg-slate-800/40 border-b border-slate-800">
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-                        <div class="sm:col-span-6">
+                        <div class="sm:col-span-4">
                             <input type="text" id="inputIdeText" placeholder="Tulis ide konten AI baru di sini..." class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
                         </div>
-                        <div class="sm:col-span-4">
-                            <select id="inputIdeClaude" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                        <div class="sm:col-span-3">
+                            <select id="inputIdeChannel" title="Pilih Channel YouTube tujuan" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                                <!-- Populated with 6 YT Channels -->
+                            </select>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <select id="inputIdeClaude" title="Pilih Status / Akun Claude" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500">
                                 <!-- Populated with Claude Accounts -->
                             </select>
                         </div>
@@ -239,12 +245,13 @@
                     </div>
                 </div>
 
-                <!-- Table Ide Konten (Columns: Ide Konten | Akun Claude | Ceklis) -->
+                <!-- Table Ide Konten (Columns: Ide Konten | Channel YT | Akun Claude | Ceklis) -->
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="border-b border-slate-800 bg-slate-950/60 text-[11px] uppercase tracking-wider text-slate-400">
-                                <th class="py-3 px-4 font-semibold">Ide Konten</th>
+                                <th class="py-3 px-4 font-semibold min-w-[180px]">Ide Konten</th>
+                                <th class="py-3 px-4 font-semibold w-40">Channel YT</th>
                                 <th class="py-3 px-4 font-semibold w-44">Akun Claude</th>
                                 <th class="py-3 px-4 font-semibold text-center w-28">Ceklis</th>
                             </tr>
@@ -619,24 +626,28 @@
             {
                 id: 'ide1',
                 ide: 'Bikin prompt cerita pendek Kucing Oren buka warung pecel lele',
+                channelId: 'yt3',
                 claudeAccount: 'Claude 3 (studio.yt03@gmail)',
                 checked: false
             },
             {
                 id: 'ide2',
                 ide: 'Riset 5 fakta palung Mariana yang belum banyak orang tahu',
+                channelId: 'yt2',
                 claudeAccount: 'Claude 4 (studio.yt04@gmail)',
                 checked: false
             },
             {
                 id: 'ide3',
                 ide: 'Script 60 detik kerajaan Atlantis versi cyberpunk',
+                channelId: 'yt1',
                 claudeAccount: 'Claude 6 (cadangan.06@gmail)',
                 checked: false
             },
             {
                 id: 'ide4',
                 ide: 'Naskah monolog Marcus Aurelius tentang disiplin pagi hari',
+                channelId: 'yt5',
                 claudeAccount: 'Claude 1 (creator.ai01@gmail)',
                 checked: true // Checked -> moves to bottom
             }
@@ -1311,6 +1322,24 @@
         // ====================================================
         // 5. RENDER KATEGORI 3: IDE KONTEN
         // ====================================================
+        function populateIdeChannelSelect() {
+            const select = document.getElementById('inputIdeChannel');
+            if (!select) return;
+            const prevVal = select.value;
+            select.innerHTML = '';
+
+            ytChannels.forEach(ch => {
+                const opt = document.createElement('option');
+                opt.value = ch.id;
+                opt.textContent = ch.name;
+                select.appendChild(opt);
+            });
+
+            if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
+                select.value = prevVal;
+            }
+        }
+
         function populateIdeClaudeSelect() {
             const select = document.getElementById('inputIdeClaude');
             if (!select) return;
@@ -1337,6 +1366,7 @@
         }
 
         function renderIdeKonten() {
+            populateIdeChannelSelect();
             const tbody = document.getElementById('ideTableBody');
             tbody.innerHTML = '';
 
@@ -1351,13 +1381,19 @@
             if (sorted.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="3" class="py-8 text-center text-slate-500 text-xs sm:text-sm">
+                        <td colspan="4" class="py-8 text-center text-slate-500 text-xs sm:text-sm">
                             Belum ada ide konten. Tambahkan ide di kolom atas!
                         </td>
                     </tr>
                 `;
             } else {
                 sorted.forEach(item => {
+                    const currentChannelId = item.channelId || (ytChannels[0] && ytChannels[0].id) || 'yt1';
+                    const ch = ytChannels.find(c => c.id === currentChannelId) || ytChannels[0];
+                    const channelOptionsHtml = ytChannels.map(c =>
+                        `<option value="${c.id}" class="bg-slate-900 text-white" ${c.id === ch.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+                    ).join('');
+
                     const isBaruNiat = !item.claudeAccount || item.claudeAccount === 'Baru Niat';
                     const matchedAcc = claudeAccounts.find(a => a.name === item.claudeAccount);
                     const isLimited = matchedAcc ? isLimitActive(matchedAcc.limitUntil) : false;
@@ -1388,14 +1424,21 @@
                             </div>
                         </td>
 
-                        <!-- Kolom 2: Akun Claude / Status Baru Niat -->
+                        <!-- Kolom 2: Channel YT -->
+                        <td class="py-3.5 px-4 align-middle">
+                            <select onchange="changeIdeChannel('${item.id}', this.value)" class="w-full max-w-[175px] text-xs font-semibold px-2.5 py-1.5 rounded-xl border ${ch.color} focus:outline-none cursor-pointer">
+                                ${channelOptionsHtml}
+                            </select>
+                        </td>
+
+                        <!-- Kolom 3: Akun Claude / Status Baru Niat -->
                         <td class="py-3.5 px-4 align-middle">
                             <select onchange="changeIdeClaudeAccount('${item.id}', this.value)" class="w-full max-w-[210px] text-xs font-medium px-2.5 py-1.5 rounded-xl border ${badgeStyle} focus:outline-none cursor-pointer">
                                 ${accountOptionsHtml}
                             </select>
                         </td>
 
-                        <!-- Kolom 3: Ceklis (+ Tombol Naik ke Up Konten) -->
+                        <!-- Kolom 4: Ceklis (+ Tombol Naik ke Up Konten) -->
                         <td class="py-3.5 px-4 align-middle text-center">
                             <div class="flex items-center justify-center gap-2.5">
                                 <label class="inline-flex items-center cursor-pointer" title="Ceklis jika sudah selesai (otomatis turun ke bawah)">
@@ -1421,6 +1464,16 @@
             document.getElementById('statPendingIdeas').textContent = pendingIdeas;
         }
 
+        function changeIdeChannel(id, newChannelId) {
+            const item = ideKontenList.find(i => i.id === id);
+            if (!item) return;
+            item.channelId = newChannelId;
+            renderIdeKonten();
+            triggerSaveAll();
+            const ch = ytChannels.find(c => c.id === newChannelId);
+            showToast(`Ide dialihkan ke ${ch ? ch.name : 'Channel YT'}`);
+        }
+
         function changeIdeClaudeAccount(id, newAccount) {
             const item = ideKontenList.find(i => i.id === id);
             if (!item) return;
@@ -1432,6 +1485,7 @@
 
         function addIdeKonten() {
             const ideInput = document.getElementById('inputIdeText');
+            const channelSelect = document.getElementById('inputIdeChannel');
             const claudeSelect = document.getElementById('inputIdeClaude');
             const ide = ideInput.value.trim();
 
@@ -1443,6 +1497,7 @@
             ideKontenList.unshift({
                 id: 'ide_' + Date.now(),
                 ide,
+                channelId: (channelSelect && channelSelect.value) || (ytChannels[0] && ytChannels[0].id) || 'yt1',
                 claudeAccount: claudeSelect.value || 'Baru Niat',
                 checked: false
             });
@@ -1468,19 +1523,22 @@
             const item = ideKontenList.find(i => i.id === id);
             if (!item) return;
 
-            // Mark idea as checked & open Up Konten form pre-filled with this idea
+            // Mark idea as checked & open Up Konten form pre-filled with this idea and its YT Channel
             item.checked = true;
             renderIdeKonten();
             triggerSaveAll();
 
             const form = document.getElementById('addUpForm');
             form.classList.remove('hidden');
+            if (item.channelId) {
+                document.getElementById('newUpChannel').value = item.channelId;
+            }
             document.getElementById('newUpTitle').value = item.ide;
             document.getElementById('newUpDesc').value = `Dieksekusi dengan ${item.claudeAccount} #ai #shorts`;
             document.getElementById('newUpSchedule').value = toLocalISOString(new Date(Date.now() + 3 * 3600 * 1000));
 
             document.getElementById('section-up').scrollIntoView({ behavior: 'smooth' });
-            showToast('Ide dikirim ke form Up Konten! Silakan pilih Channel & Jadwal Tayang.');
+            showToast('Ide & Channel YT dikirim ke form Up Konten! Tinggal atur Jadwal Tayang.');
         }
 
         function deleteIdeKonten(id) {
@@ -1523,6 +1581,7 @@
             });
             closeChannelModal();
             renderUpKonten();
+            renderIdeKonten();
             triggerSaveAll();
             showToast('Nama ke-6 Channel YouTube berhasil diperbarui & disimpan!');
         }
@@ -1981,3 +2040,4 @@
     </script>
 </body>
 </html>
+```
