@@ -1317,6 +1317,12 @@
             const prevVal = select.value;
             select.innerHTML = '';
 
+            // Opsi paling atas untuk ide yang baru niat / belum ada progres sama sekali
+            const niatOpt = document.createElement('option');
+            niatOpt.value = 'Baru Niat';
+            niatOpt.textContent = '🌱 Baru Niat (Belum Progres)';
+            select.appendChild(niatOpt);
+
             claudeAccounts.forEach(acc => {
                 const active = isLimitActive(acc.limitUntil);
                 const opt = document.createElement('option');
@@ -1352,9 +1358,24 @@
                 `;
             } else {
                 sorted.forEach(item => {
-                    // Check if linked Claude account is currently ready or limited
+                    const isBaruNiat = !item.claudeAccount || item.claudeAccount === 'Baru Niat';
                     const matchedAcc = claudeAccounts.find(a => a.name === item.claudeAccount);
                     const isLimited = matchedAcc ? isLimitActive(matchedAcc.limitUntil) : false;
+
+                    const badgeStyle = isBaruNiat
+                        ? 'bg-slate-800/90 text-slate-300 border-slate-600'
+                        : isLimited
+                            ? 'bg-orange-500/10 text-orange-300 border-orange-500/30'
+                            : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
+
+                    const accountOptionsHtml = [
+                        `<option value="Baru Niat" class="bg-slate-900 text-slate-200" ${isBaruNiat ? 'selected' : ''}>🌱 Baru Niat (Belum Progres)</option>`,
+                        ...claudeAccounts.map(acc => {
+                            const active = isLimitActive(acc.limitUntil);
+                            const selected = acc.name === item.claudeAccount ? 'selected' : '';
+                            return `<option value="${escapeHtml(acc.name)}" class="bg-slate-900 text-white" ${selected}>${escapeHtml(acc.name)} ${active ? '(Limit)' : '(Ready)'}</option>`;
+                        })
+                    ].join('');
 
                     const tr = document.createElement('tr');
                     tr.className = `row-transition hover:bg-slate-800/40 ${item.checked ? 'bg-slate-950/60 opacity-55' : ''}`;
@@ -1367,16 +1388,11 @@
                             </div>
                         </td>
 
-                        <!-- Kolom 2: Akun Claude -->
+                        <!-- Kolom 2: Akun Claude / Status Baru Niat -->
                         <td class="py-3.5 px-4 align-middle">
-                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border ${
-                                isLimited
-                                    ? 'bg-orange-500/10 text-orange-300 border-orange-500/30'
-                                    : 'bg-slate-800 text-slate-200 border-slate-700'
-                            }">
-                                <span class="w-2 h-2 rounded-full ${isLimited ? 'bg-orange-400' : 'bg-emerald-400'}"></span>
-                                <span class="truncate max-w-[140px]">${escapeHtml(item.claudeAccount)}</span>
-                            </div>
+                            <select onchange="changeIdeClaudeAccount('${item.id}', this.value)" class="w-full max-w-[210px] text-xs font-medium px-2.5 py-1.5 rounded-xl border ${badgeStyle} focus:outline-none cursor-pointer">
+                                ${accountOptionsHtml}
+                            </select>
                         </td>
 
                         <!-- Kolom 3: Ceklis (+ Tombol Naik ke Up Konten) -->
@@ -1405,6 +1421,15 @@
             document.getElementById('statPendingIdeas').textContent = pendingIdeas;
         }
 
+        function changeIdeClaudeAccount(id, newAccount) {
+            const item = ideKontenList.find(i => i.id === id);
+            if (!item) return;
+            item.claudeAccount = newAccount;
+            renderIdeKonten();
+            triggerSaveAll();
+            showToast(`Status/Akun ide diubah ke: ${newAccount}`);
+        }
+
         function addIdeKonten() {
             const ideInput = document.getElementById('inputIdeText');
             const claudeSelect = document.getElementById('inputIdeClaude');
@@ -1418,7 +1443,7 @@
             ideKontenList.unshift({
                 id: 'ide_' + Date.now(),
                 ide,
-                claudeAccount: claudeSelect.value || 'Claude 1',
+                claudeAccount: claudeSelect.value || 'Baru Niat',
                 checked: false
             });
 
